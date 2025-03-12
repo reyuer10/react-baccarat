@@ -103,11 +103,11 @@ function App() {
           Reset
         </button>
       </div>
-      <div className='text-2xl font-bold flex roboto-mono-900 relative'>
+      <div className='text-2xl font-bold flex roboto-mono-900 relative bg-gray-50'>
         <div className='absolute opacity-20 z-10 flex justify-center items-center h-full w-full'>
-          <p className=' text-[108px] '>BIG ROAD</p>
+          <p className=' text-[108px] tracking-wider'>BIG ROAD</p>
         </div>
-        <div className='flex bg-gray-100'>
+        <div className='flex  z-20'>
           {boardData.bigRoad.map((b, index) => {
             return (
               <BigRoad
@@ -119,9 +119,9 @@ function App() {
           })}
         </div>
       </div>
-      <div className='text-2xl font-bold flex  roboto-mono-900 relative '>
+      <div className='text-2xl font-bold flex  roboto-mono-900 relative bg-gray-50'>
         <div className='absolute opacity-20 z-10 flex justify-center items-center h-full w-full'>
-          <p className=' text-[108px] bg-gray-100'>MARKER ROAD</p>
+          <p className=' text-[108px] tracking-wider '>MARKER ROAD</p>
         </div>
         <div className='flex z-20'>
           {boardData.markerRoad.map((m, index) => {
