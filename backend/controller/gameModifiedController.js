@@ -28,12 +28,12 @@ exports.getGameResults = async (req, res) => {
     "SELECT * FROM tb_results WHERE result_name != 'Tie'";
 
   try {
-    const resultBoardData = await databaseQuery(queryGetBoardResults);
-    const resultMarkerRoadData = await databaseQuery(queryGetResultsExceptTie);
+    const getBoardData = await databaseQuery(queryGetBoardResults);
+    const getBoardDataExceptTie = await databaseQuery(queryGetResultsExceptTie);
 
     return res.status(OK).send({
-      bigRoadData: resultBoardData,
-      markerRoadData: resultMarkerRoadData,
+      bigRoadData: getBoardDataExceptTie,
+      markerRoadData: getBoardData,
     });
   } catch (error) {
     return res.status(internalServer).send({
@@ -44,6 +44,7 @@ exports.getGameResults = async (req, res) => {
 };
 
 exports.addGameResults = async (req, res) => {
+  const queryGetResultName = "SELECT results_id, result_name FROM tb_results";
   const queryGetResults = "SELECT * FROM tb_results";
   const queryGetResultsExceptTie =
     "SELECT * FROM tb_results WHERE result_name != 'Tie'";
@@ -57,7 +58,7 @@ exports.addGameResults = async (req, res) => {
   const queryAddResults =
     "INSERT INTO tb_results(`result_name`, `main_resultCol`, `num_posCol`, `num_posRow`, `timestamp`) VALUE(?, ?, ?, ?, NOW())";
 
-  const queryGetRowResults = "SELECT num_posRow FROM tb_results";
+  // const queryGetRowResults = "SELECT num_posRow FROM tb_results";
 
   const {
     body: { result_name },
@@ -68,65 +69,78 @@ exports.addGameResults = async (req, res) => {
     const isResultsBanker = result_name == "Banker";
     const isResultsTie = result_name == "Tie";
 
-    const resultsQueryGetPreviousMainResults = await databaseQuery(
-      queryGetPreviousMainResults
-    );
+    const getPreviousResults = await databaseQuery(queryGetPreviousMainResults);
+    const previousMainResult = getPreviousResults[0];
 
-    const previousMainResult = resultsQueryGetPreviousMainResults[0];
-
-    const currentResult = await databaseQuery(queryGetCurrentResults);
-    const currResults = currentResult[0];
+    const getCurrentResults = await databaseQuery(queryGetCurrentResults);
+    const currentResults = getCurrentResults[0];
 
     const resultsGetBoardData = await databaseQuery(queryGetResults);
+    const isBoardDataEmpty = resultsGetBoardData.length == 0;
 
-    if (resultsGetBoardData.length == 0) {
+    const isPrevResultMatchToCurrrent =
+      previousMainResult?.result_name == result_name;
+
+    const isPrevResultNotMatchToCurrent =
+      previousMainResult?.result_name != result_name;
+
+    const isPrevResultPlayer = previousMainResult?.result_name == "Player";
+    const isPrevResultBanker = previousMainResult?.result_name == "Banker";
+    const isPrevResultTie = previousMainResult?.result_name == "Tie";
+
+    if (isBoardDataEmpty) {
       await databaseQuery(queryAddResults, [result_name, 1, 1, 1]);
       const resultsQueryGetResults = await databaseQuery(queryGetResults);
       const resultsQueryGetResultsExceptTie = await databaseQuery(
         queryGetResultsExceptTie
       );
-      console.log(resultsQueryGetResults);
       return res.status(OK).send({
         bigRoadData: resultsQueryGetResultsExceptTie,
         markerRoadData: resultsQueryGetResults,
       });
     }
 
-    if (isResultsTie && previousMainResult?.result_name == result_name) {
-      console.log("Hello world.");
+    if (isResultsTie && isPrevResultMatchToCurrrent) {
+      await databaseQuery(queryAddResults, [
+        result_name,
+        0,
+        previousMainResult?.num_posCol,
+        previousMainResult?.num_posRow,
+      ]);
     }
 
-    if (isResultsPlayer && previousMainResult?.result_name == result_name) {
-      const rowIncrement = currResults?.num_posRow + 1;
-      const currColumn = currResults?.num_posCol;
+    if (isResultsPlayer && isPrevResultMatchToCurrrent) {
+      const rowIncrement = currentResults?.num_posRow + 1;
+      const currColumn = currentResults?.num_posCol;
       await databaseQuery(queryAddResults, [
         result_name,
         0,
         currColumn,
         rowIncrement,
       ]); // main-results, column, row
-    } else if (
-      isResultsBanker &&
-      previousMainResult?.result_name != result_name
-    ) {
-      const colIncrement = currResults?.num_posCol + 1;
+    } else if (isResultsBanker && isPrevResultNotMatchToCurrent) {
+      const colIncrement = currentResults?.num_posCol + 1;
       await databaseQuery(queryAddResults, [result_name, 1, colIncrement, 1]); // main-results, column, row
+    } else if ((isPrevResultPlayer || isPrevResultBanker) && isResultsTie) {
+      await databaseQuery(queryAddResults, [
+        result_name,
+        0,
+        previousMainResult?.num_posCol,
+        previousMainResult?.num_posRow,
+      ]); // main-results, column, row
     }
 
-    if (isResultsBanker && previousMainResult?.result_name == result_name) {
-      const rowIncrement = currResults?.num_posRow + 1;
-      const colIncrement = currResults?.num_posCol;
+    if (isResultsBanker && isPrevResultMatchToCurrrent) {
+      const rowIncrement = currentResults?.num_posRow + 1;
+      const colIncrement = currentResults?.num_posCol;
       await databaseQuery(queryAddResults, [
         result_name,
         0,
         colIncrement,
         rowIncrement,
       ]); // main-results, column, row
-    } else if (
-      isResultsPlayer &&
-      previousMainResult?.result_name != result_name
-    ) {
-      const colIncrement = currResults?.num_posCol + 1;
+    } else if (isResultsPlayer && isPrevResultNotMatchToCurrent) {
+      const colIncrement = currentResults?.num_posCol + 1;
       await databaseQuery(queryAddResults, [result_name, 1, colIncrement, 1]); // main-results, column, row
     }
 
@@ -134,6 +148,7 @@ exports.addGameResults = async (req, res) => {
     const resultsQueryGetResultsExceptTie = await databaseQuery(
       queryGetResultsExceptTie
     );
+    console.log(resultsQueryGetResults)
     return res.status(OK).send({
       bigRoadData: resultsQueryGetResultsExceptTie,
       markerRoadData: resultsQueryGetResults,

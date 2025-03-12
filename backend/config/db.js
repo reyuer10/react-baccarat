@@ -19,9 +19,9 @@ connection.getConnection((err, data) => {
     console.log("Can't connect to the database.");
   }
 
-  connection.query("SELECT * FROM tb_results", (err, data) => {
-    console.log(data);
-  });
+  // connection.query("SELECT * FROM tb_results", (err, data) => {
+  //   console.log(data);
+  // });
 
   console.log("Connected to the database.");
 });

@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
 .result-text-shadow {
-  text-shadow: -3px 1px 20px #000000;
+  text-shadow: -1px 1px 15px #000000;
+}
+
+.roboto-mono-900 {
+  font-family: "Roboto Mono", monospace;
+  font-optical-sizing: auto;
+  font-weight: 900;
+  font-style: normal;
 }

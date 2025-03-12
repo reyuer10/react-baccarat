@@ -114,6 +114,196 @@ export const bigRoad = [
         isColumnPositionMain: true,
       },
     ],
+    col4: [
+      {
+        id: 19,
+        columnPosition: 4,
+        rowPosition: 1,
+        isColumnPositionMain: true,
+      },
+      {
+        id: 20,
+        columnPosition: 4,
+        rowPosition: 2,
+        isColumnPositionMain: true,
+      },
+      {
+        id: 21,
+        columnPosition: 4,
+        rowPosition: 3,
+        isColumnPositionMain: true,
+      },
+      {
+        id: 22,
+        columnPosition: 4,
+        rowPosition: 4,
+        isColumnPositionMain: true,
+      },
+      {
+        id: 23,
+        columnPosition: 4,
+        rowPosition: 5,
+        isColumnPositionMain: true,
+      },
+      {
+        id: 24,
+        columnPosition: 4,
+        rowPosition: 6,
+        isColumnPositionMain: true,
+      },
+    ],
+    col5: [
+      {
+        id: 25,
+        columnPosition: 5,
+        rowPosition: 1,
+        isColumnPositionMain: true,
+      },
+      {
+        id: 26,
+        columnPosition: 5,
+        rowPosition: 2,
+        isColumnPositionMain: true,
+      },
+      {
+        id: 27,
+        columnPosition: 5,
+        rowPosition: 3,
+        isColumnPositionMain: true,
+      },
+      {
+        id: 28,
+        columnPosition: 5,
+        rowPosition: 4,
+        isColumnPositionMain: true,
+      },
+      {
+        id: 29,
+        columnPosition: 5,
+        rowPosition: 5,
+        isColumnPositionMain: true,
+      },
+      {
+        id: 30,
+        columnPosition: 5,
+        rowPosition: 6,
+        isColumnPositionMain: true,
+      },
+    ],
+    col6: [
+      {
+        id: 31,
+        columnPosition: 6,
+        rowPosition: 1,
+        isColumnPositionMain: true,
+      },
+      {
+        id: 32,
+        columnPosition: 6,
+        rowPosition: 2,
+        isColumnPositionMain: true,
+      },
+      {
+        id: 33,
+        columnPosition: 6,
+        rowPosition: 3,
+        isColumnPositionMain: true,
+      },
+      {
+        id: 34,
+        columnPosition: 6,
+        rowPosition: 4,
+        isColumnPositionMain: true,
+      },
+      {
+        id: 35,
+        columnPosition: 6,
+        rowPosition: 5,
+        isColumnPositionMain: true,
+      },
+      {
+        id: 36,
+        columnPosition: 6,
+        rowPosition: 6,
+        isColumnPositionMain: true,
+      },
+    ],
+    col7: [
+      {
+        id: 37,
+        columnPosition: 7,
+        rowPosition: 1,
+        isColumnPositionMain: true,
+      },
+      {
+        id: 38,
+        columnPosition: 7,
+        rowPosition: 2,
+        isColumnPositionMain: true,
+      },
+      {
+        id: 39,
+        columnPosition: 7,
+        rowPosition: 3,
+        isColumnPositionMain: true,
+      },
+      {
+        id: 40,
+        columnPosition: 7,
+        rowPosition: 4,
+        isColumnPositionMain: true,
+      },
+      {
+        id: 41,
+        columnPosition: 7,
+        rowPosition: 5,
+        isColumnPositionMain: true,
+      },
+      {
+        id: 42,
+        columnPosition: 7,
+        rowPosition: 6,
+        isColumnPositionMain: true,
+      },
+    ],
+    col8: [
+      {
+        id: 43,
+        columnPosition: 8,
+        rowPosition: 1,
+        isColumnPositionMain: true,
+      },
+      {
+        id: 44,
+        columnPosition: 8,
+        rowPosition: 2,
+        isColumnPositionMain: true,
+      },
+      {
+        id: 45,
+        columnPosition: 8,
+        rowPosition: 3,
+        isColumnPositionMain: true,
+      },
+      {
+        id: 46,
+        columnPosition: 8,
+        rowPosition: 4,
+        isColumnPositionMain: true,
+      },
+      {
+        id: 47,
+        columnPosition: 8,
+        rowPosition: 5,
+        isColumnPositionMain: true,
+      },
+      {
+        id: 48,
+        columnPosition: 7,
+        rowPosition: 6,
+        isColumnPositionMain: true,
+      },
+    ],
   },
 ];
 
@@ -235,3 +425,59 @@ export const markerRoad = [
     ],
   },
 ];
+
+export const generateBigRoadData = (columm) => {
+  const columns = [];
+  let counterId = 1;
+
+  for (let i = 1; i <= columm; i++) {
+    let columnData = [];
+    for (let row = 1; row <= 6; row++) {
+      columnData.push({
+        id: counterId++,
+        columnPosition: i,
+        rowPosition: row,
+        isColumnPositionMain: true,
+      });
+    }
+
+    columns.push({ [`col${i}`]: columnData });
+  }
+
+  return columns;
+};
+
+export const generateMarkerRoadData = (numColumn) => {
+  const columns = [];
+  let counterId = 1;
+  // colId: 6,
+  //       columnPosition: 1,
+  //       rowPosition: 6,
+  //       isColumnPositionMain: false,
+
+  for (let i = 1; i <= numColumn; i++) {
+    let columnData = [];
+    for (let row = 1; row <= 6; row++) {
+      columnData.push({
+        colId: counterId++,
+        columnPosition: i,
+        rowPosition: row,
+        isColumnPositionMain: true,
+      });
+    }
+
+    columns.push({ [`col${i}`]: columnData });
+  }
+
+  return columns;
+};
+
+export const generateColumn = (numColumn) => {
+  const columnData = [];
+
+  for (let i = 1; i <= numColumn; i++) {
+    columnData.push(`col${i}`);
+  }
+
+  return columnData;
+};

@@ -8,43 +8,22 @@ function MarkerRoad({ m, resultBoardMarkerData }) {
         handleShowResultsOnMarkerRoadBy,
     } = useCostumizeResults()
 
-    return (
-        <div className='flex font-bold'>
+
+    for (let key in m) {
+        return (
             <div>
-                {m.col1.map(col => {
+                {(m[key].map(col => {
                     return (<div
-                        className={`h-[70px] w-[70px] border flex justify-center items-center`}
-                        key={col.colId}>
-                        <p className={`text-4xl result-text-shadow border px-3 py-1 rounded-full text-white outline-2 outline-white ring-4  ${handleFormatStyleResults(handleShowResultsOnMarkerRoadBy(col.colId, resultBoardMarkerData))}`}>
+                        className={`h-[70px] w-[70px] border flex justify-center items-center `}
+                        key={col.id}>
+                        <p className={`text-4xl result-text-shadow  py-[2px] px-3 rounded-full  ${handleFormatStyleResults(handleShowResultsOnMarkerRoadBy(col.colId, resultBoardMarkerData))}`}>
                             {handleShowResultsOnMarkerRoadBy(col.colId, resultBoardMarkerData)}
                         </p>
-                    </div>)
-                })}
-            </div>
-            <div>
-                {m.col2.map(col => {
-                    return (<div
-                        className={`h-[70px] w-[70px] border flex justify-center items-center`}
-                        key={col.colId}>
-                        <p className={`text-4xl result-text-shadow border px-3 py-1 rounded-full text-white outline-2 outline-white ring-4  ${handleFormatStyleResults(handleShowResultsOnMarkerRoadBy(col.colId, resultBoardMarkerData))}`}>
-                            {handleShowResultsOnMarkerRoadBy(col.colId, resultBoardMarkerData)}
-                        </p>
-                    </div>)
-                })}
-            </div>
-            <div>
-                {m.col3.map(col => {
-                    return (<div
-                        className={`h-[70px] w-[70px] border flex justify-center items-center`}
-                        key={col.colId}>
-                        <p className={`text-4xl result-text-shadow border px-3 py-1 rounded-full text-white outline-2 outline-white ring-4  ${handleFormatStyleResults(handleShowResultsOnMarkerRoadBy(col.colId, resultBoardMarkerData))}`}>
-                            {handleShowResultsOnMarkerRoadBy(col.colId, resultBoardMarkerData)}
-                        </p>
-                    </div>)
-                })}
-            </div>
-        </div>
-    )
+                    </div>
+                    )
+                }))}
+            </div>)
+    }
 }
 
 export default memo(MarkerRoad)

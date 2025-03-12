@@ -1,20 +1,19 @@
 import React, { useEffect, useState } from 'react'
 import BigRoad from './components/BigRoad'
 import { fetchAddResults, fetchGetResults, fetchResetGameResults } from './services/gameModifiedApi'
-import { bigRoad, markerRoad } from './data/boardData'
+import { bigRoad, generateBigRoadData, generateMarkerRoadData, markerRoad } from './data/boardData'
 import MarkerRoad from './components/MarkerRoad'
 
 function App() {
   let keySequence = ''
 
   const [boardData, setBoardData] = useState({
-    bigRoad: bigRoad,
-    markerRoad: markerRoad,
+    bigRoad: generateBigRoadData(50),
+    markerRoad: generateMarkerRoadData(50),
   })
 
   const [resultsBoardData, setResultsBoardData] = useState([])
   const [resultBoardMarkerData, setResultsBoardMarkerData] = useState([])
-  console.log(resultsBoardData)
   const handleEnterKeyCode = async (e) => {
     let keyPress = e.key
     try {
@@ -77,21 +76,23 @@ function App() {
     const handleFetchGameResults = async () => {
       try {
         const response = await fetchGetResults();
+        // console.log(response)
         setResultsBoardData(response.bigRoadData);
         setResultsBoardMarkerData(response.markerRoadData)
-        console.log(response)
 
       } catch (error) {
         console.log(error);
       }
     }
     handleFetchGameResults();
-  }, []);
+
+  }, [])
+
 
 
 
   return (
-    <div className='h-screen '>
+    <div className='h-screen flex flex-col space-y-4 p-4'>
       <div className='space-x-2'>
         <button
           className='px-4 py-2 rounded-lg bg-red-400 text-white text-2xl'
@@ -102,22 +103,33 @@ function App() {
           Reset
         </button>
       </div>
-      <div className='text-2xl font-bold p-4'>
-        {boardData.bigRoad.map((b, index) => {
-          return (
-            <BigRoad
-              key={index}
-              b={b}
-              resultsBoardData={resultsBoardData} />
-          )
-        })}
+      <div className='text-2xl font-bold flex roboto-mono-900 relative'>
+        <div className='absolute opacity-20 z-10 flex justify-center items-center h-full w-full'>
+          <p className=' text-[108px] '>BIG ROAD</p>
+        </div>
+        <div className='flex bg-gray-100'>
+          {boardData.bigRoad.map((b, index) => {
+            return (
+              <BigRoad
+                key={index}
+                b={b}
+                resultsBoardData={resultsBoardData}
+              />
+            )
+          })}
+        </div>
       </div>
-      <div>
-        {boardData.markerRoad.map((m, index) => {
-          return (
-            <MarkerRoad m={m} key={index} resultBoardMarkerData={resultBoardMarkerData} />
-          )
-        })}
+      <div className='text-2xl font-bold flex  roboto-mono-900 relative '>
+        <div className='absolute opacity-20 z-10 flex justify-center items-center h-full w-full'>
+          <p className=' text-[108px] bg-gray-100'>MARKER ROAD</p>
+        </div>
+        <div className='flex z-20'>
+          {boardData.markerRoad.map((m, index) => {
+            return (
+              <MarkerRoad m={m} key={index} resultBoardMarkerData={resultBoardMarkerData} />
+            )
+          })}
+        </div>
       </div>
     </div>
   )
