@@ -1,0 +1,126 @@
+import React, { useEffect, useState } from 'react'
+import BigRoad from './components/BigRoad'
+import { fetchAddResults, fetchGetResults, fetchResetGameResults } from './services/gameModifiedApi'
+import { bigRoad, markerRoad } from './data/boardData'
+import MarkerRoad from './components/MarkerRoad'
+
+function App() {
+  let keySequence = ''
+
+  const [boardData, setBoardData] = useState({
+    bigRoad: bigRoad,
+    markerRoad: markerRoad,
+  })
+
+  const [resultsBoardData, setResultsBoardData] = useState([])
+  const [resultBoardMarkerData, setResultsBoardMarkerData] = useState([])
+  console.log(resultsBoardData)
+  const handleEnterKeyCode = async (e) => {
+    let keyPress = e.key
+    try {
+      if (e.key === "Enter") {
+        if (keySequence == '11') {
+          const response = await fetchAddResults({
+            result_name: "Player",
+          })
+
+          setResultsBoardData(response.bigRoadData);
+          setResultsBoardMarkerData(response.markerRoadData)
+        } else if (keySequence == 22) {
+
+          const response = await fetchAddResults({
+            result_name: "Banker",
+          })
+          setResultsBoardData(response.bigRoadData);
+          setResultsBoardMarkerData(response.markerRoadData)
+        } else if (keySequence == 33) {
+
+          const response = await fetchAddResults({
+            result_name: "Tie",
+          })
+          setResultsBoardData(response.bigRoadData);
+          setResultsBoardMarkerData(response.markerRoadData)
+        }
+        keySequence = ''
+      }
+
+      if (e.key === "1" || e.key === "2" || e.key === "3") {
+        keySequence += keyPress
+      }
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  const handleFetchResetGameResults = async () => {
+    try {
+      const response = await fetchResetGameResults();
+      if (response) {
+        window.location.reload()
+      }
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+
+  useEffect(() => {
+
+    document.body.addEventListener("keydown", handleEnterKeyCode)
+    return () => {
+      document.body.removeEventListener("keydown", handleEnterKeyCode)
+    }
+  }, [boardData])
+
+
+  useEffect(() => {
+    const handleFetchGameResults = async () => {
+      try {
+        const response = await fetchGetResults();
+        setResultsBoardData(response.bigRoadData);
+        setResultsBoardMarkerData(response.markerRoadData)
+        console.log(response)
+
+      } catch (error) {
+        console.log(error);
+      }
+    }
+    handleFetchGameResults();
+  }, []);
+
+
+
+  return (
+    <div className='h-screen '>
+      <div className='space-x-2'>
+        <button
+          className='px-4 py-2 rounded-lg bg-red-400 text-white text-2xl'
+          onClick={() => {
+            localStorage.removeItem("boardData")
+            handleFetchResetGameResults()
+          }}>
+          Reset
+        </button>
+      </div>
+      <div className='text-2xl font-bold p-4'>
+        {boardData.bigRoad.map((b, index) => {
+          return (
+            <BigRoad
+              key={index}
+              b={b}
+              resultsBoardData={resultsBoardData} />
+          )
+        })}
+      </div>
+      <div>
+        {boardData.markerRoad.map((m, index) => {
+          return (
+            <MarkerRoad m={m} key={index} resultBoardMarkerData={resultBoardMarkerData} />
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+export default App
