@@ -1,30 +1,31 @@
 export const useCostumizeResults = () => {
   const handleFormatStyleResults = (results) => {
-    let style = "";
+
+    
     if (results == "P")
-      return (style =
-        " border text-white outline-2 outline-white ring-4 bg-cyan-600 ring-cyan-600 shadow-lg shadow-gray-500");
+      return "border text-white outline-2 outline-white ring-4 bg-cyan-600 ring-cyan-600 shadow-lg shadow-gray-500";
     if (results == "B")
-      return (style =
-        "border text-white outline-2 outline-white ring-4 bg-red-600 ring-red-600 shadow-lg shadow-gray-500");
+      return "border text-white outline-2 outline-white ring-4 bg-red-600 ring-red-600 shadow-lg shadow-gray-500";
     if (results == "T")
-      return (style =
-        "border text-white outline-2 outline-white ring-4 bg-green-600 ring-green-600 shadow-lg shadow-gray-500");
+      return "border text-white outline-2 outline-white ring-4 bg-green-600 ring-green-600 shadow-lg shadow-gray-500";
   };
 
   const handleFormatResults = (results) => {
-    let res = "";
-    if (results == "Player") return (res = "P");
-    if (results == "Banker") return (res = "B");
-    if (results == "Tie") return (res = "T");
+    if (results == "Player") return "P";
+    if (results == "Banker") return "B";
+    if (results == "Tie") return "T";
   };
 
   const handleShowResultsBy = (col, row, resultsBoardData) => {
     const isBoardResultsFound = resultsBoardData?.find(
-      (board, index) => board.num_posCol == col && board.num_posRow == row
+      (board) => board.num_posCol == col && board.num_posRow == row
     );
+
     return isBoardResultsFound
-      ? handleFormatResults(isBoardResultsFound.result_name)
+      ? {
+          resultName: handleFormatResults(isBoardResultsFound.result_name),
+          resultTieCount: isBoardResultsFound.tie_count,
+        }
       : null;
   };
 

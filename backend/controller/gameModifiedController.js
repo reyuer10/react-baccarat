@@ -63,7 +63,13 @@ exports.addGameResults = async (req, res) => {
     "INSERT INTO tb_results(`result_name`, `tie_count`, `main_resultCol`, `num_posCol`, `num_posRow`, `timestamp`) VALUE(?, ?, ?, ?, ?, NOW())";
 
   const queryUpdateMainColumnResults =
-    "UPDATE tb_results SET main_resultCol = ? WHERE results_id = ?";
+    "UPDATE tb_results SET tie_count = ?,  main_resultCol = ? WHERE results_id = ?";
+
+  const queryUpdateTieCountResults =
+    "UPDATE tb_results SET tie_count = ? WHERE main_resultCol = 2 order by results_id desc LIMIT 1";
+
+  const queryFindSecondaryResult =
+    "SELECT * FROM tb_results WHERE main_resultCol = 2 order by results_id desc LIMIT 1 ";
 
   // const queryGetRowResults = "SELECT num_posRow FROM tb_results";
   const {
@@ -74,8 +80,6 @@ exports.addGameResults = async (req, res) => {
     const isResultsPlayer = result_name == "Player";
     const isResultsBanker = result_name == "Banker";
     const isResultsTie = result_name == "Tie";
-
-    // const isResultFoundPlayerOrBanker = filterPlayerOrBanker.length;
 
     const getPreviousMainResults = await databaseQuery(
       queryGetPreviousMainResults
@@ -107,6 +111,10 @@ exports.addGameResults = async (req, res) => {
     const getPreviousResults = await databaseQuery(queryGetPreviousResults);
     const previousResults = getPreviousResults[0];
 
+    const getSecondaryResult = await databaseQuery(queryFindSecondaryResult);
+
+    const secondaryResult = getSecondaryResult[0]; // main_resultCol =  2
+
     if (isBoardDataEmpty) {
       if (isResultsTie) {
         await databaseQuery(queryAddResults, [result_name, 1, 0, 1, 1]);
@@ -123,159 +131,262 @@ exports.addGameResults = async (req, res) => {
       });
     }
 
-    //  B, B, B, = T?
-    if (isResultsTie && !isPrevResultMatchToCurrent) {
-      if (
-        (isPrevResultBanker || isPrevResultPlayer) &&
-        currentResults?.main_resultCol != 1
-      ) {
-        await databaseQuery(queryUpdateMainColumnResults, [
-          2,
-          currentResults.results_id,
-        ]);
-
-        await databaseQuery(queryAddResults, [
-          result_name,
-          1,
-          0,
-          currentResults?.num_posCol,
-          currentResults?.num_posRow,
-        ]);
-
-        const resultsQueryGetResults = await databaseQuery(queryGetResults);
-        const resultsQueryGetResultsExceptTie = await databaseQuery(
-          queryGetResultsExceptTie
-        );
-        return res.status(OK).send({
-          bigRoadData: resultsQueryGetResultsExceptTie,
-          markerRoadData: resultsQueryGetResults,
-        });
-      }
-    }
-
-    if (isResultsTie && isPrevResultMatchToCurrent) {
-      const tieCountIncrement = currentResults?.tie_count + 1;
-      await databaseQuery(queryAddResults, [
-        result_name,
-        tieCountIncrement,
-        0,
-        currentResults?.num_posCol,
-        currentResults?.num_posRow,
-      ]);
-
-      const resultsQueryGetResults = await databaseQuery(queryGetResults);
-      const resultsQueryGetResultsExceptTie = await databaseQuery(
-        queryGetResultsExceptTie
-      );
-      return res.status(OK).send({
-        bigRoadData: resultsQueryGetResultsExceptTie,
-        markerRoadData: resultsQueryGetResults,
-      });
-    } else if ((isResultsPlayer || isResultsBanker) && isPrevResultTie) {
-      if (!isPrevResultMatchToCurrent) {
-        await databaseQuery(queryAddResults, [
-          result_name,
-          0,
-          1,
-          currentResults?.num_posCol,
-          currentResults?.num_posRow,
-        ]);
-
-        const resultsQueryGetResults = await databaseQuery(queryGetResults);
-        const resultsQueryGetResultsExceptTie = await databaseQuery(
-          queryGetResultsExceptTie
-        );
-        return res.status(OK).send({
-          bigRoadData: resultsQueryGetResultsExceptTie,
-          markerRoadData: resultsQueryGetResults,
-        });
-      }
-      if (isPrevMainResultMatchToCurrent) {
-        await databaseQuery(queryAddResults, [
-          result_name,
-          0,
-          0,
-          previousMainResult?.num_posCol,
-          previousMainResult?.num_posRow + 1,
-        ]);
+    if (isResultsBanker) {
+      if (isPrevResultMatchToCurrent) {
+        if (currentResults?.num_posRow >= 6) {
+          await databaseQuery(queryAddResults, [
+            result_name,
+            0,
+            0,
+            currentResults?.num_posCol + 1,
+            currentResults?.num_posRow,
+          ]);
+        } else {
+          const rowIncrement = currentResults?.num_posRow + 1;
+          const colIncrement = currentResults?.num_posCol;
+          await databaseQuery(queryAddResults, [
+            result_name,
+            0,
+            0,
+            colIncrement,
+            rowIncrement,
+          ]);
+        }
       } else {
+        const colIncrement = currentResults?.num_posCol + 1;
         await databaseQuery(queryAddResults, [
           result_name,
           0,
           1,
-          previousMainResult?.num_posCol + 1,
-          previousMainResult?.num_posRow,
-        ]);
-      }
-
-      const resultsQueryGetResults = await databaseQuery(queryGetResults);
-      const resultsQueryGetResultsExceptTie = await databaseQuery(
-        queryGetResultsExceptTie
-      );
-      return res.status(OK).send({
-        bigRoadData: resultsQueryGetResultsExceptTie,
-        markerRoadData: resultsQueryGetResults,
-      });
-    }
-
-    if (isResultsPlayer && isPrevMainResultMatchToCurrent) {
-      const rowIncrement = currentResults?.num_posRow + 1;
-      const currColumn = currentResults?.num_posCol;
-      await databaseQuery(queryAddResults, [
-        result_name,
-        0,
-        0,
-        currColumn,
-        rowIncrement,
-      ]); // main-results, column, row
-    } else if (isResultsBanker && isPrevMainResultNotMatchToCurrent) {
-      const colIncrement = currentResults?.num_posCol + 1;
-      await databaseQuery(queryAddResults, [
-        result_name,
-        0,
-        1,
-        colIncrement,
-        1,
-      ]); // main-results, column, row
-    } else if (isResultsTie && (isPrevResultPlayer || isPrevResultBanker)) {
-      await databaseQuery(queryAddResults, [
-        result_name,
-        1,
-        0,
-        previousMainResult?.num_posCol,
-        previousMainResult?.num_posRow,
-      ]); // main-results, column, row
-    }
-
-    if (isResultsBanker && isPrevMainResultMatchToCurrent) {
-      if (currentResults?.num_posRow >= 6) {
-        await databaseQuery(queryAddResults, [
-          result_name,
-          0,
-          0,
-          currentResults?.num_posCol + 1,
-          currentResults?.num_posRow,
-        ]); // main-results, column, row
-      } else {
-        const rowIncrement = currentResults?.num_posRow + 1;
-        const colIncrement = currentResults?.num_posCol;
-        await databaseQuery(queryAddResults, [
-          result_name,
-          0,
-          0,
           colIncrement,
-          rowIncrement,
-        ]); // main-results, column, row
+          1,
+        ]);
       }
-    } else if (isResultsPlayer && isPrevMainResultNotMatchToCurrent) {
-      const colIncrement = currentResults?.num_posCol + 1;
-      await databaseQuery(queryAddResults, [
-        result_name,
-        0,
-        1,
-        colIncrement,
-        1,
-      ]); // main-results, column, row
+
+      const resultsQueryGetResults = await databaseQuery(queryGetResults);
+      const resultsQueryGetResultsExceptTie = await databaseQuery(
+        queryGetResultsExceptTie
+      );
+      return res.status(OK).send({
+        bigRoadData: resultsQueryGetResultsExceptTie,
+        markerRoadData: resultsQueryGetResults,
+      });
+    }
+
+    if (isResultsPlayer) {
+      if (isPrevResultMatchToCurrent) {
+        if (currentResults?.num_posRow >= 6) {
+          await databaseQuery(queryAddResults, [
+            result_name,
+            0,
+            0,
+            currentResults?.num_posCol + 1,
+            currentResults?.num_posRow,
+          ]);
+        } else {
+          // console.log("is this console")
+          const rowIncrement = currentResults?.num_posRow + 1;
+          await databaseQuery(queryAddResults, [
+            result_name,
+            0,
+            0,
+            currentResults?.num_posCol,
+            rowIncrement,
+          ]);
+        }
+      }
+
+      if (isPrevResultBanker) {
+        await databaseQuery(queryAddResults, [
+          result_name,
+          0,
+          1,
+          currentResults?.num_posCol + 1,
+          1,
+        ]);
+      }
+
+      if (isPrevResultTie) {
+        const isPreviousResultNotFound = !previousMainResult;
+        const isSecondResultNotFound = getSecondaryResult.length == 0;
+        if (isPreviousResultNotFound && isSecondResultNotFound) {
+          await databaseQuery(queryAddResults, [
+            result_name,
+            currentResults?.tie_count,
+            2,
+            currentResults?.num_posCol,
+            currentResults?.num_posRow,
+          ]);
+
+          const resultsQueryGetResults = await databaseQuery(queryGetResults);
+          const resultsQueryGetResultsExceptTie = await databaseQuery(
+            queryGetResultsExceptTie
+          );
+          return res.status(OK).send({
+            bigRoadData: resultsQueryGetResultsExceptTie,
+            markerRoadData: resultsQueryGetResults,
+          });
+        }
+
+        const secResultsCol = secondaryResult.num_posCol;
+        const secResultsRow = secondaryResult.num_posRow;
+
+        // is secondary results is exist?
+        if (!isSecondResultNotFound) {
+          if (secResultsRow >= 6) {
+            await databaseQuery(queryAddResults, [
+              result_name,
+              0,
+              1,
+              secResultsCol + 1,
+              currentResults?.num_posRow,
+            ]);
+          } else {
+            await databaseQuery(queryAddResults, [
+              result_name,
+              0,
+              0,
+              secResultsCol,
+              currentResults?.num_posRow + 1,
+            ]);
+          }
+        }
+      }
+    }
+
+    // if (isResultsTie && isPrevResultMatchToCurrent) {
+    //   const tieCountIncrement = currentResults?.tie_count + 1;
+    //   await databaseQuery(queryAddResults, [
+    //     result_name,
+    //     tieCountIncrement,
+    //     0,
+    //     currentResults?.num_posCol,
+    //     currentResults?.num_posRow,
+    //   ]);
+
+    //   const resultsQueryGetResults = await databaseQuery(queryGetResults);
+    //   const resultsQueryGetResultsExceptTie = await databaseQuery(
+    //     queryGetResultsExceptTie
+    //   );
+    //   return res.status(OK).send({
+    //     bigRoadData: resultsQueryGetResultsExceptTie,
+    //     markerRoadData: resultsQueryGetResults,
+    //   });
+    // } else if ((isResultsPlayer || isResultsBanker) && isPrevResultTie) {
+    //   if (!isPrevResultMatchToCurrent) {
+    //     await databaseQuery(queryAddResults, [
+    //       result_name,
+    //       0,
+    //       1,
+    //       currentResults?.num_posCol,
+    //       currentResults?.num_posRow,
+    //     ]);
+
+    //     const resultsQueryGetResults = await databaseQuery(queryGetResults);
+    //     const resultsQueryGetResultsExceptTie = await databaseQuery(
+    //       queryGetResultsExceptTie
+    //     );
+    //     return res.status(OK).send({
+    //       bigRoadData: resultsQueryGetResultsExceptTie,
+    //       markerRoadData: resultsQueryGetResults,
+    //     });
+    //   }
+    //   if (isPrevMainResultMatchToCurrent) {
+    //     await databaseQuery(queryAddResults, [
+    //       result_name,
+    //       0,
+    //       0,
+    //       previousMainResult?.num_posCol,
+    //       previousMainResult?.num_posRow + 1,
+    //     ]);
+    //   } else {
+    //     await databaseQuery(queryAddResults, [
+    //       result_name,
+    //       0,
+    //       1,
+    //       previousMainResult?.num_posCol + 1,
+    //       previousMainResult?.num_posRow,
+    //     ]);
+    //   }
+
+    //   const resultsQueryGetResults = await databaseQuery(queryGetResults);
+    //   const resultsQueryGetResultsExceptTie = await databaseQuery(
+    //     queryGetResultsExceptTie
+    //   );
+    //   return res.status(OK).send({
+    //     bigRoadData: resultsQueryGetResultsExceptTie,
+    //     markerRoadData: resultsQueryGetResults,
+    //   });
+    // }
+
+    if (isResultsTie) {
+      const isPreviousResultBanker = currentResults?.result_name == "Banker";
+      const isPreviousResultPlayer = currentResults?.result_name == "Player";
+
+      if (isPreviousResultPlayer) {
+        if (currentResults?.main_resultCol == 2) {
+          await databaseQuery(queryAddResults, [
+            result_name,
+            currentResults?.tie_count + 1,
+            0,
+            currentResults?.num_posCol,
+            currentResults?.num_posRow,
+          ]);
+
+          await databaseQuery(queryUpdateMainColumnResults, [
+            currentResults?.tie_count + 1,
+            2,
+            currentResults?.results_id,
+          ]);
+        } else {
+          await databaseQuery(queryAddResults, [
+            result_name,
+            1,
+            0,
+            currentResults?.num_posCol,
+            currentResults?.num_posRow,
+          ]);
+
+          await databaseQuery(queryUpdateMainColumnResults, [
+            1,
+            2,
+            currentResults?.results_id,
+          ]);
+        }
+
+        const resultsQueryGetResults = await databaseQuery(queryGetResults);
+        const resultsQueryGetResultsExceptTie = await databaseQuery(
+          queryGetResultsExceptTie
+        );
+        return res.status(OK).send({
+          bigRoadData: resultsQueryGetResultsExceptTie,
+          markerRoadData: resultsQueryGetResults,
+        });
+      }
+
+      const tieCountIncrement = currentResults?.tie_count + 1;
+      if (isPrevResultTie) {
+        await databaseQuery(queryUpdateTieCountResults, [
+          currentResults?.tie_count + 1,
+        ]);
+
+        await databaseQuery(queryAddResults, [
+          result_name,
+          tieCountIncrement,
+          0,
+          currentResults?.num_posCol,
+          currentResults?.num_posRow,
+        ]);
+      }
+      // else {
+      //   await databaseQuery(queryAddResults, [
+      //     result_name,
+      //     1,
+      //     0,
+      //     currentResults?.num_posCol,
+      //     currentResults?.num_posRow,
+      //   ]);
+      // }
     }
 
     const resultsQueryGetResults = await databaseQuery(queryGetResults);

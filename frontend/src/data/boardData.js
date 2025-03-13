@@ -437,7 +437,7 @@ export const generateBigRoadData = (columm) => {
         id: counterId++,
         columnPosition: i,
         rowPosition: row,
-        isColumnPositionMain: true,
+        columnCount: null,
       });
     }
 
@@ -453,7 +453,7 @@ export const generateMarkerRoadData = (numColumn) => {
   // colId: 6,
   //       columnPosition: 1,
   //       rowPosition: 6,
-  //       isColumnPositionMain: false,
+  //       columnCount: false,
 
   for (let i = 1; i <= numColumn; i++) {
     let columnData = [];
@@ -462,7 +462,7 @@ export const generateMarkerRoadData = (numColumn) => {
         colId: counterId++,
         columnPosition: i,
         rowPosition: row,
-        isColumnPositionMain: true,
+        columnCount: null,
       });
     }
 
