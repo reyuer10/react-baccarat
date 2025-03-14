@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import BigRoad from './components/BigRoad'
-import { fetchAddResults, fetchGetResults, fetchResetGameResults } from './services/gameModifiedApi'
+import { fetchAddResults, fetchDeleteLatestGameResults, fetchGetResults, fetchResetGameResults } from './services/gameModifiedApi'
 import { bigRoad, generateBigRoadData, generateMarkerRoadData, markerRoad } from './data/boardData'
 import MarkerRoad from './components/MarkerRoad'
 
@@ -18,32 +18,33 @@ function App() {
     let keyPress = e.key
     try {
       if (e.key === "Enter") {
-        if (keySequence == '11') {
+        if (keySequence == 1) {
           const response = await fetchAddResults({
             result_name: "Player",
           })
-
           setResultsBoardData(response.bigRoadData);
-          setResultsBoardMarkerData(response.markerRoadData)
-        } else if (keySequence == 22) {
-
+          setResultsBoardMarkerData(response.markerRoadData);
+        } else if (keySequence == 2) {
           const response = await fetchAddResults({
             result_name: "Banker",
           })
           setResultsBoardData(response.bigRoadData);
           setResultsBoardMarkerData(response.markerRoadData)
-        } else if (keySequence == 33) {
-
+        } else if (keySequence == 3) {
           const response = await fetchAddResults({
             result_name: "Tie",
           })
+          setResultsBoardData(response.bigRoadData);
+          setResultsBoardMarkerData(response.markerRoadData)
+        } else if (keySequence == 4) {
+          const response = await fetchDeleteLatestGameResults();
           setResultsBoardData(response.bigRoadData);
           setResultsBoardMarkerData(response.markerRoadData)
         }
         keySequence = ''
       }
 
-      if (e.key === "1" || e.key === "2" || e.key === "3") {
+      if (e.key === "1" || e.key === "2" || e.key === "3" || e.key === "4") {
         keySequence += keyPress
       }
     } catch (error) {
@@ -92,7 +93,7 @@ function App() {
 
 
   return (
-    <div className='h-screen flex flex-col space-y-4 p-4'>
+    <div className='h-screen flex flex-col space-y-4 p-4 bg-lime-50'>
       <div className='space-x-2'>
         <button
           className='px-4 py-2 rounded-lg bg-red-400 text-white text-2xl'

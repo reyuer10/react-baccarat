@@ -3,7 +3,7 @@ import axios from "axios";
 const fetchAddResults = async ({ result_name }) => {
   try {
     const response = await axios.post(
-      "http://localhost:3000/api/baccarat/POST/results/game",
+      `${import.meta.env.VITE_HOST}/${import.meta.env.VITE_ADD_RESULTS}`,
       {
         result_name: result_name,
       }
@@ -18,7 +18,7 @@ const fetchAddResults = async ({ result_name }) => {
 const fetchGetResults = async () => {
   try {
     const response = await axios.get(
-      "http://localhost:3000/api/baccarat/GET/results/game"
+      `${import.meta.env.VITE_HOST}/${import.meta.env.VITE_GET_RESULTS}`
     );
 
     return response.data;
@@ -30,7 +30,7 @@ const fetchGetResults = async () => {
 const fetchResetGameResults = async () => {
   try {
     const response = await axios.delete(
-      "http://localhost:3000/api/baccarat/DELETE/results/game"
+      `${import.meta.env.VITE_HOST}/${import.meta.env.VITE_RESET_RESULTS}`
     );
 
     return response.data;
@@ -42,7 +42,19 @@ const fetchResetGameResults = async () => {
 const fetchNewGameResults = async () => {
   try {
     const response = await axios.post(
-      "http://localhost:3000/api/baccarat/POST/new/game"
+      `${import.meta.env.VITE_HOST}/${import.meta.env.VITE_NEW_GAME}`
+    );
+
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+const fetchDeleteLatestGameResults = async () => {
+  try {
+    const response = await axios.delete(
+      `${import.meta.env.VITE_HOST}/${import.meta.env.VITE_UNDO_RESULTS}`
     );
 
     return response.data;
@@ -56,4 +68,5 @@ export {
   fetchGetResults,
   fetchResetGameResults,
   fetchNewGameResults,
+  fetchDeleteLatestGameResults,
 };

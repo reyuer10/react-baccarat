@@ -6,5 +6,9 @@ router.post("/POST/new/game", gameModifiedController.newGameResults);
 router.post("/POST/results/game", gameModifiedController.addGameResults);
 router.get("/GET/results/game", gameModifiedController.getGameResults);
 router.delete("/DELETE/results/game", gameModifiedController.resetGameResults);
+router.delete(
+  "/DELETE/undo/results/game",
+  gameModifiedController.undoGameResults
+);
 
 module.exports = router;

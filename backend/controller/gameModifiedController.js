@@ -43,6 +43,40 @@ exports.getGameResults = async (req, res) => {
   }
 };
 
+exports.undoGameResults = async (req, res) => {
+  const queryDeleteLatestResults =
+    "DELETE FROM tb_results WHERE results_id = ?";
+  const queryGetLatestResultsId =
+    "SELECT results_id FROM tb_results order by results_id desc LIMIT 1";
+  const queryGetResults = "SELECT * FROM tb_results";
+  const queryGetResultsExceptTie =
+    "SELECT * FROM tb_results WHERE result_name != 'Tie'";
+
+  try {
+    const getLatestResultsId = await databaseQuery(queryGetLatestResultsId);
+    const results_id = getLatestResultsId[0]?.results_id;
+    const deleteLatestResults = await databaseQuery(queryDeleteLatestResults, [
+      results_id,
+    ]);
+
+    if (deleteLatestResults) {
+      const resultsQueryGetResults = await databaseQuery(queryGetResults);
+      const resultsQueryGetResultsExceptTie = await databaseQuery(
+        queryGetResultsExceptTie
+      );
+      return res.status(OK).send({
+        bigRoadData: resultsQueryGetResultsExceptTie,
+        markerRoadData: resultsQueryGetResults,
+      });
+    }
+  } catch (error) {
+    return res.status(internalServer).send({
+      message: "Internal Server Error.",
+      error: error,
+    });
+  }
+};
+
 exports.addGameResults = async (req, res) => {
   const queryGetResults = "SELECT * FROM tb_results";
   const queryGetResultsExceptTie =
@@ -73,7 +107,10 @@ exports.addGameResults = async (req, res) => {
     "SELECT * FROM tb_results WHERE num_posRow = 1 && result_name != 'Tie' order by results_id desc LIMIT 1 OFFSET 1";
 
   const queryFindResultsUsingRowToLatest =
-    "SELECT results_id, num_posCol, num_posRow FROM tb_results WHERE results_id BETWEEN ? AND ? AND result_name != 'Tie' && result_name != ? order by results_id desc";
+    "SELECT results_id, num_posCol, num_posRow FROM tb_results WHERE result_name != 'Tie' order by results_id desc";
+
+  const queryFindResultUsingRowDuplicate =
+    "SELECT results_id, result_name, num_posRow FROM tb_results WHERE result_name != 'Tie' order by results_id desc LIMIT 2";
 
   const {
     body: { result_name },
@@ -111,21 +148,30 @@ exports.addGameResults = async (req, res) => {
     );
     const resultsUsingColumn = getResultsUsingColumnOne[0];
 
+    const currentResultDuplicate = await databaseQuery(
+      queryFindResultUsingRowDuplicate
+    );
+
+    console.log(currentResultDuplicate);
+
+    const isCurrentResultRowsDuplicate =
+      currentResultDuplicate[0] != null &&
+      currentResultDuplicate[0]?.num_posRow ==
+        currentResultDuplicate[1]?.num_posRow &&
+      currentResultDuplicate[0]?.result_name ==
+        currentResultDuplicate[1]?.result_name;
+
+    // console.log(isCurrentResultRowsDuplicate);
+
     const getPreviousResultsId = await databaseQuery(
       queryFindPreviousResultUsingRowOffset
     );
 
     const getResultsUsingRowToLatest = await databaseQuery(
-      queryFindResultsUsingRowToLatest,
-      [
-        getPreviousResultsId[0]?.results_id,
-        currentResults?.results_id,
-        result_name,
-      ]
+      queryFindResultsUsingRowToLatest
     );
 
     function isNumColAndRowTaken() {
-      console.log(getResultsUsingRowToLatest);
       const futureIncrementCol = currentResults?.num_posCol;
       const futureIncrementRow = currentResults?.num_posRow + 1;
 
@@ -164,15 +210,26 @@ exports.addGameResults = async (req, res) => {
             currentResults?.num_posRow,
           ]);
         } else {
-          const rowIncrement = currentResults?.num_posRow + 1;
-          const colIncrement = currentResults?.num_posCol;
-          await databaseQuery(queryAddResults, [
-            result_name,
-            0,
-            0,
-            colIncrement,
-            rowIncrement,
-          ]);
+          if (isNumColAndRowTaken() || isCurrentResultRowsDuplicate) {
+            console.log(isCurrentResultRowsDuplicate);
+            const colIncrement = currentResults?.num_posCol + 1;
+            await databaseQuery(queryAddResults, [
+              result_name,
+              0,
+              0,
+              colIncrement,
+              currentResults?.num_posRow,
+            ]);
+          } else {
+            const rowIncrement = currentResults?.num_posRow + 1;
+            await databaseQuery(queryAddResults, [
+              result_name,
+              0,
+              0,
+              currentResults?.num_posCol,
+              rowIncrement,
+            ]);
+          }
         }
       }
 
@@ -220,13 +277,23 @@ exports.addGameResults = async (req, res) => {
               currentResults?.num_posRow,
             ]);
           } else {
-            await databaseQuery(queryAddResults, [
-              result_name,
-              0,
-              0,
-              secResultsCol,
-              currentResults?.num_posRow + 1,
-            ]);
+            if (isCurrentResultRowsDuplicate) {
+              await databaseQuery(queryAddResults, [
+                result_name,
+                0,
+                0,
+                currentResults?.num_posCol + 1,
+                currentResults?.num_posRow,
+              ]);
+            } else {
+              await databaseQuery(queryAddResults, [
+                result_name,
+                0,
+                0,
+                secResultsCol,
+                currentResults?.num_posRow + 1,
+              ]);
+            }
           }
         }
       }
@@ -243,7 +310,7 @@ exports.addGameResults = async (req, res) => {
             currentResults?.num_posRow,
           ]);
         } else {
-          if (isNumColAndRowTaken()) {
+          if (isNumColAndRowTaken() || isCurrentResultRowsDuplicate) {
             const colIncrement = currentResults?.num_posCol + 1;
             await databaseQuery(queryAddResults, [
               result_name,
@@ -309,13 +376,23 @@ exports.addGameResults = async (req, res) => {
               currentResults?.num_posRow,
             ]);
           } else {
-            await databaseQuery(queryAddResults, [
-              result_name,
-              0,
-              0,
-              secResultsCol,
-              currentResults?.num_posRow + 1,
-            ]);
+            if (isCurrentResultRowsDuplicate) {
+              await databaseQuery(queryAddResults, [
+                result_name,
+                0,
+                0,
+                currentResults?.num_posCol + 1,
+                currentResults?.num_posRow,
+              ]);
+            } else {
+              await databaseQuery(queryAddResults, [
+                result_name,
+                0,
+                0,
+                secResultsCol,
+                currentResults?.num_posRow + 1,
+              ]);
+            }
           }
         }
       }
