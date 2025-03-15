@@ -28,14 +28,17 @@ function BigRoad({ b, resultsBoardData }) {
             variants={containerVariants}
             initial="hidden"
             animate="visible"
-
+            className='w-full flex justify-center items-center'
         >
             {Object.keys(b).map(key => (
-                <div key={key}>
+                <div
+                    key={key}
+                    className='flex flex-col'
+                >
                     {b[key].map(col => {
                         const resultData = handleShowResultsBy(col.columnPosition, col.rowPosition, resultsBoardData);
                         const tieCount = resultData?.resultTieCount || null;
-
+                        // 
                         return (
                             <motion.div
                                 key={col.id}

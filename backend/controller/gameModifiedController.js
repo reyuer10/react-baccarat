@@ -52,12 +52,37 @@ exports.undoGameResults = async (req, res) => {
   const queryGetResultsExceptTie =
     "SELECT * FROM tb_results WHERE result_name != 'Tie'";
 
+  const queryGetCurrentResults =
+    "SELECT * FROM tb_results order by results_id desc LIMIT 1";
+
+  const queryGetSecondaryRoleReults =
+    "SELECT * FROM tb_results WHERE main_resultCol = 2 order by results_id desc LIMIT 1";
+
+  const queryUpdateTieCountResults =
+    "UPDATE tb_results SET tie_count = ?  WHERE main_resultCol = 2 order by results_id desc LIMIT 1";
+
   try {
     const getLatestResultsId = await databaseQuery(queryGetLatestResultsId);
     const results_id = getLatestResultsId[0]?.results_id;
     const deleteLatestResults = await databaseQuery(queryDeleteLatestResults, [
       results_id,
     ]);
+    const getCurrentResults = await databaseQuery(queryGetCurrentResults);
+    const getSecondaryRole = await databaseQuery(queryGetSecondaryRoleReults);
+
+    const secondaryRole = getSecondaryRole[0];
+    const currResults = getCurrentResults[0];
+    if (currResults?.result_name == "Tie") {
+      const decrementTieCount = secondaryRole?.tie_count - 1;
+      await databaseQuery(queryUpdateTieCountResults, [decrementTieCount]);
+    } else if (
+      (currResults?.result_name == "Player" ||
+        currResults?.result_name == "Banker") &&
+      currResults?.tie_count > 0
+    ) {
+      const decrementTieCount = secondaryRole?.tie_count - 1;
+      await databaseQuery(queryUpdateTieCountResults, [decrementTieCount]);
+    }
 
     if (deleteLatestResults) {
       const resultsQueryGetResults = await databaseQuery(queryGetResults);
@@ -102,9 +127,6 @@ exports.addGameResults = async (req, res) => {
 
   const queryFindPreviousResultUsingRow =
     "SELECT * FROM tb_results WHERE num_posRow = 1 && result_name != 'Tie' order by results_id desc LIMIT 1";
-
-  const queryFindPreviousResultUsingRowOffset =
-    "SELECT * FROM tb_results WHERE num_posRow = 1 && result_name != 'Tie' order by results_id desc LIMIT 1 OFFSET 1";
 
   const queryFindResultsUsingRowToLatest =
     "SELECT results_id, num_posCol, num_posRow FROM tb_results WHERE result_name != 'Tie' order by results_id desc";
@@ -152,20 +174,12 @@ exports.addGameResults = async (req, res) => {
       queryFindResultUsingRowDuplicate
     );
 
-    console.log(currentResultDuplicate);
-
     const isCurrentResultRowsDuplicate =
       currentResultDuplicate[0] != null &&
       currentResultDuplicate[0]?.num_posRow ==
         currentResultDuplicate[1]?.num_posRow &&
       currentResultDuplicate[0]?.result_name ==
         currentResultDuplicate[1]?.result_name;
-
-    // console.log(isCurrentResultRowsDuplicate);
-
-    const getPreviousResultsId = await databaseQuery(
-      queryFindPreviousResultUsingRowOffset
-    );
 
     const getResultsUsingRowToLatest = await databaseQuery(
       queryFindResultsUsingRowToLatest
@@ -277,7 +291,7 @@ exports.addGameResults = async (req, res) => {
               currentResults?.num_posRow,
             ]);
           } else {
-            if (isCurrentResultRowsDuplicate) {
+            if (isNumColAndRowTaken() || isCurrentResultRowsDuplicate) {
               await databaseQuery(queryAddResults, [
                 result_name,
                 0,
@@ -376,7 +390,7 @@ exports.addGameResults = async (req, res) => {
               currentResults?.num_posRow,
             ]);
           } else {
-            if (isCurrentResultRowsDuplicate) {
+            if (isNumColAndRowTaken() || isCurrentResultRowsDuplicate) {
               await databaseQuery(queryAddResults, [
                 result_name,
                 0,
