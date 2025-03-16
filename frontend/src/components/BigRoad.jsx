@@ -1,6 +1,5 @@
 import React, { memo } from 'react';
 import { useCostumizeResults } from '../hooks/useCustomizeResults';
-import { motion } from "framer-motion";
 
 function BigRoad({ b, resultsBoardData }) {
     const {
@@ -8,42 +7,20 @@ function BigRoad({ b, resultsBoardData }) {
         handleFormatStyleResults,
     } = useCostumizeResults();
 
-    const containerVariants = {
-        hidden: { opacity: 0 },
-        visible: {
-            opacity: 1,
-            transition: {
-                staggerChildren: 0.2, // Elements appear one by one
-            }
-        }
-    };
-
-    const itemVariants = {
-        hidden: { opacity: 0, x: -50 },
-        visible: { opacity: 1, x: 0 }
-    };
-
     return (
-        <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            className='w-full flex justify-center items-center'
-        >
+        <div>
             {Object.keys(b).map(key => (
                 <div
                     key={key}
-                    className='flex flex-col'
+                    className='h-full'
                 >
                     {b[key].map(col => {
                         const resultData = handleShowResultsBy(col.columnPosition, col.rowPosition, resultsBoardData);
                         const tieCount = resultData?.resultTieCount || null;
-                        // 
                         return (
-                            <motion.div
+                            <div
                                 key={col.id}
-                                className="h-[70px] w-[70px] border border-gray-300 shadow-inner shadow-gray-500 flex justify-center items-center relative"
-                                variants={itemVariants}
+                                className="h-[50px] w-[50px] border border-gray-300 shadow-inner shadow-gray-500 flex justify-center items-center relative"
                             >
                                 <p className={`text-4xl result-text-shadow py-[2px] px-3 rounded-full ${handleFormatStyleResults(resultData?.resultName)}`}>
                                     {resultData?.resultName}
@@ -53,12 +30,12 @@ function BigRoad({ b, resultsBoardData }) {
                                         {tieCount}
                                     </span>
                                 )}
-                            </motion.div>
+                            </div>
                         );
                     })}
                 </div>
             ))}
-        </motion.div>
+        </div>
     );
 }
 

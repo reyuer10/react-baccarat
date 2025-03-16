@@ -472,12 +472,71 @@ export const generateMarkerRoadData = (numColumn) => {
   return columns;
 };
 
-export const generateColumn = (numColumn) => {
-  const columnData = [];
+export const generateBigEyeBoyData = (numColumn) => {
+  const columns = [];
+  let counterId = 1;
 
   for (let i = 1; i <= numColumn; i++) {
-    columnData.push(`col${i}`);
+    let columnData = [];
+    for (let row = 1; row <= 6; row++) {
+      columnData.push({
+        colId: counterId++,
+        columnPosition: i,
+        rowPosition: row,
+        columnCount: null,
+        styleBorder: i % 2 == 0 ? false : true,
+        styleBorderBox: row % 2 == 0 ? false : true,
+      });
+    }
+
+    columns.push({ [`col${i}`]: columnData });
   }
 
-  return columnData;
+  return columns;
+};
+
+export const generateSmallRoadData = (numColumn) => {
+  const columns = [];
+  let counterId = 1;
+
+  for (let i = 1; i <= numColumn; i++) {
+    let columnData = [];
+    for (let row = 1; row <= 6; row++) {
+      columnData.push({
+        colId: counterId++,
+        columnPosition: i,
+        rowPosition: row,
+        columnCount: null,
+        styleBorder: i % 2 == 0 ? false : true,
+        styleBorderBox: row % 2 == 0 ? false : true,
+      });
+    }
+
+    columns.push({ [`col${i}`]: columnData });
+  }
+
+  return columns;
+};
+
+export const generateCockroachPigData = (numColumn) => {
+  const columns = [];
+  let counterId = 1;
+
+  for (let i = 1; i <= numColumn; i++) {
+    let columnData = [];
+    for (let row = 1; row <= 6; row++) {
+      columnData.push({
+        colId: counterId++,
+        columnPosition: i,
+        rowPosition: row,
+        columnCount: null,
+        styleBorder: i % 2 == 0 ? false : true,
+        styleBorderBox: row % 2 == 0 ? false : true,
+      });
+    }
+
+    columns.push({ [`col${i}`]: columnData });
+  }
+
+  return columns;
 };
