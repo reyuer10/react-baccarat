@@ -8,7 +8,7 @@ function BigRoad({ b, resultsBoardData }) {
     } = useCostumizeResults();
 
     return (
-        <div>
+        <div className='w-full'>
             {Object.keys(b).map(key => (
                 <div
                     key={key}
@@ -20,9 +20,9 @@ function BigRoad({ b, resultsBoardData }) {
                         return (
                             <div
                                 key={col.id}
-                                className="h-[50px] w-[50px] border border-gray-300 shadow-inner shadow-gray-500 flex justify-center items-center relative"
+                                className="h-[calc(100%/6)] border border-gray-300 shadow-inner shadow-gray-500 flex justify-center items-center relative"
                             >
-                                <p className={`text-4xl result-text-shadow py-[2px] px-3 rounded-full ${handleFormatStyleResults(resultData?.resultName)}`}>
+                                <p className={` result-text-shadow px-2 rounded-full ${handleFormatStyleResults(resultData?.resultName)}`}>
                                     {resultData?.resultName}
                                 </p>
                                 {tieCount && (

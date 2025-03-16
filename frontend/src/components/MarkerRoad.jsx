@@ -9,16 +9,17 @@ function MarkerRoad({ m, resultBoardMarkerData }) {
     } = useCostumizeResults()
 
     return (
-        <div>
+        <div className='w-full'>
             {Object.keys(m).map((key) => (
                 <div
-                    key={key}>
+                    key={key}
+                    className='h-full'>
                     {m[key].map(col => {
                         return (<div
                             key={col.colId}
-                            className={`h-[50px] w-[50px] border border-gray-300 shadow-inner shadow-gray-500 flex justify-center items-center `}
+                            className={`h-[calc(100%/6)] border border-gray-300 shadow-inner shadow-gray-500 flex justify-center items-center `}
                         >
-                            <p className={`text-4xl result-text-shadow py-[2px] px-3 rounded-full ${handleFormatStyleResults(handleShowResultsOnMarkerRoadBy(col.colId, resultBoardMarkerData))}`}>
+                            <p className={` result-text-shadow px-2  rounded-full ${handleFormatStyleResults(handleShowResultsOnMarkerRoadBy(col.colId, resultBoardMarkerData))}`}>
                                 {handleShowResultsOnMarkerRoadBy(col.colId, resultBoardMarkerData)}
                             </p>
                         </div>

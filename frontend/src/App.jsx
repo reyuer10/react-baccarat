@@ -1,12 +1,19 @@
 import React, { useEffect, useState } from 'react'
 import BigRoad from './components/BigRoad'
 import { fetchAddResults, fetchDeleteLatestGameResults, fetchGetResults, fetchResetGameResults } from './services/gameModifiedApi'
-import { bigRoad, generateBigEyeBoyData, generateBigRoadData, generateCockroachPigData, generateMarkerRoadData, generateSmallRoadData, markerRoad } from './data/boardData'
+
+import {
+  generateBigEyeBoyData,
+  generateBigRoadData,
+  generateCockroachPigData,
+  generateMarkerRoadData,
+  generateSmallRoadData,
+} from './data/boardData'
+
 import MarkerRoad from './components/MarkerRoad'
 import Header from './components/Header'
 import BigEyeBoy from './components/BigEyeBoy'
 import SmallRoad from './components/SmallRoad'
-import Footer from './components/Footer'
 import CockroachPig from './components/CockroachPig'
 
 function App() {
@@ -14,11 +21,11 @@ function App() {
 
 
   const [boardData, setBoardData] = useState({
-    bigRoad: generateBigRoadData(50),
-    markerRoad: generateMarkerRoadData(50),
-    bigEyeBoy: generateBigEyeBoyData(10),
-    smallRoad: generateSmallRoadData(10),
-    cockroachPig: generateCockroachPigData(10)
+    bigRoad: generateBigRoadData(40),
+    markerRoad: generateMarkerRoadData(40),
+    bigEyeBoy: generateBigEyeBoyData(60),
+    smallRoad: generateSmallRoadData(30),
+    cockroachPig: generateCockroachPigData(30)
   })
 
 
@@ -104,17 +111,17 @@ function App() {
 
 
   return (
-    <div className='grid grid-cols-24 h-screen p-4 gap-2'>
+    <div className='h-screen grid grid-cols-24 p-4 gap-2'>
       <div className='border col-span-24 row-span-1'>
         <Header
           handleFetchResetGameResults={handleFetchResetGameResults}
         />
       </div>
-      <div className=' border col-span-24 row-span-6 text-2xl font-bold flex roboto-mono-900 relative bg-gray-50'>
-        <div className='absolute opacity-20 z-10 flex justify-center items-center h-full w-full'>
-          <p className=' text-[108px] tracking-wider'>BIG ROAD</p>
+      <div className='max-[1600px]:hidden border col-span-24 row-span-6 font-bold flex roboto-mono-900 relative bg-gray-50 overflow-x-hidden'>
+        <div className='absolute opacity-20 z-10 flex justify-center items-center h-full w-full '>
+          <p className=' text-[100px] tracking-wider'>BIG ROAD</p>
         </div>
-        <div className='flex z-20 border'>
+        <div className='flex z-20 w-full'>
           {boardData.bigRoad.map((b, index) => {
             return (
               <BigRoad
@@ -126,11 +133,11 @@ function App() {
           })}
         </div>
       </div>
-      <div className='border col-span-24 row-span-4 text-2xl font-bold flex  roboto-mono-900 relative bg-gray-50'>
+      <div className='max-[1600px]:hidden border col-span-24 row-span-4 font-bold flex roboto-mono-900 relative bg-gray-50 overflow-x-hidden'>
         <div className='absolute opacity-20 z-10 flex justify-center items-center h-full w-full'>
-          <p className=' text-[108px] tracking-wider'>BIG EYE BOY</p>
+          <p className=' text-[100px] tracking-wider'>BIG EYE BOY</p>
         </div>
-        <div className='flex z-20 border-t-4 border-gray-300 w-full'>
+        <div className='flex z-20 w-full border-t-4 border-gray-300'>
           {boardData.bigEyeBoy.map((e, index) => {
             return (
               <BigEyeBoy e={e} key={index} />
@@ -138,11 +145,11 @@ function App() {
           })}
         </div>
       </div>
-      <div className='border col-span-12 row-span-4 text-2xl font-bold flex  roboto-mono-900 relative bg-gray-50'>
+      <div className='max-[1600px]:hidden border col-span-12 row-span-4 font-bold flex roboto-mono-900 relative bg-gray-50 overflow-x-hidden'>
         <div className='absolute opacity-20 z-10 flex justify-center items-center h-full w-full'>
-          <p className=' text-[108px] tracking-wider'>SMALL ROAD</p>
-        </div>
-        <div className='flex z-20 border-t-4 border-gray-300 w-full'>
+          <p className=' text-[100px] tracking-wider'>SMALL ROAD</p>
+        </div> 
+        <div className='flex z-20 border-t-4 w-full border-gray-300'>
           {boardData.smallRoad.map((sr, index) => {
             return (
               <SmallRoad sr={sr} key={index} />
@@ -150,14 +157,23 @@ function App() {
           })}
         </div>
       </div>
-      <div className='border col-span-12 row-span-4'>
-        <CockroachPig />
-      </div>
-      <div className='border col-span-24 row-span-6 text-2xl font-bold flex  roboto-mono-900 relative bg-gray-50'>
+      <div className='max-[1600px]:hidden border col-span-12 row-span-4 font-bold flex roboto-mono-900 relative bg-gray-50 overflow-x-hidden'>
         <div className='absolute opacity-20 z-10 flex justify-center items-center h-full w-full'>
-          <p className=' text-[108px] tracking-wider '>MARKER ROAD</p>
+          <p className='text-[100px] tracking-wider'>COCKROACH PIG</p>
         </div>
-        <div className='flex z-20 border'>
+        <div className='flex z-20 border-t-4 w-full border-gray-300'>
+          {boardData.cockroachPig.map((cp, index) => {
+            return (
+              <CockroachPig cp={cp} key={index} />
+            )
+          })}
+        </div>
+      </div>
+      <div className='max-[1600px]:hidden border col-span-24 row-span-6 font-bold flex roboto-mono-900 relative bg-gray-50 overflow-x-hidden'>
+        <div className='absolute opacity-20 z-10 flex justify-center items-center h-full w-full'>
+          <p className=' text-[100px] tracking-wider'>MARKER ROAD</p>
+        </div>
+        <div className='flex z-20 border w-full'>
           {boardData.markerRoad.map((m, index) => {
             return (
               <MarkerRoad m={m} key={index} resultBoardMarkerData={resultBoardMarkerData} />
@@ -175,9 +191,9 @@ export default App
 // <div className='space-x-2'>
 //   <Header />
 // </div>
-// <div className='text-2xl font-bold flex roboto-mono-900 relative bg-gray-50'>
+// <div className= font-bold flex roboto-mono-900 relative bg-gray-50'>
 //   <div className='absolute opacity-20 z-10 flex justify-center items-center h-full w-full'>
-//     <p className=' text-[108px] tracking-wider'>BIG ROAD</p>
+//     <p className=' text-[100px] tracking-wider'>BIG ROAD</p>
 //   </div>
 //   <div className='flex z-20 border'>
 //     {/* {boardData.bigRoad.map((b, index) => {
@@ -191,9 +207,9 @@ export default App
 //     })} */}
 //   </div>
 // </div>
-// <div className='text-2xl font-bold flex  roboto-mono-900 relative bg-gray-50'>
+// <div className= font-bold flex  roboto-mono-900 relative bg-gray-50'>
 //   <div className='absolute opacity-20 z-10 flex justify-center items-center h-full w-full'>
-//     <p className=' text-[108px] tracking-wider '>MARKER ROAD</p>
+//     <p className=' text-[100px] tracking-wider '>MARKER ROAD</p>
 //   </div>
 //   <div className='flex z-20 border'>
 //     {/* {boardData.markerRoad.map((m, index) => {
