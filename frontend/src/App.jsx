@@ -42,21 +42,25 @@ function App() {
             result_name: "Player",
           })
 
-          await fetchAddDetailGameResults()
+          const responseFromBigEyeBoyData = await fetchAddDetailGameResults();
+          console.log(responseFromBigEyeBoyData)
           setResultsBoardData(response.bigRoadData);
           setResultsBoardMarkerData(response.markerRoadData);
         } else if (keySequence == 2) {
           const response = await fetchAddResults({
             result_name: "Banker",
           })
-          await fetchAddDetailGameResults()
+          const responseFromBigEyeBoyData = await fetchAddDetailGameResults();
+          console.log(responseFromBigEyeBoyData)
           setResultsBoardData(response.bigRoadData);
           setResultsBoardMarkerData(response.markerRoadData)
         } else if (keySequence == 3) {
           const response = await fetchAddResults({
             result_name: "Tie",
           })
-          await fetchAddDetailGameResults()
+          const responseFromBigEyeBoyData = await fetchAddDetailGameResults();
+          console.log(responseFromBigEyeBoyData)
+
           setResultsBoardData(response.bigRoadData);
           setResultsBoardMarkerData(response.markerRoadData)
         } else if (keySequence == 4) {

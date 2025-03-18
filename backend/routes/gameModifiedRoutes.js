@@ -10,8 +10,8 @@ router.delete(
   "/DELETE/undo/results/game",
   gameModifiedController.undoGameResults
 );
-router.post(
-  "/POST/detail/game",
+router.get(
+  "/GET/detail/game",
   gameModifiedController.secondaryAddGameResults
 );
 

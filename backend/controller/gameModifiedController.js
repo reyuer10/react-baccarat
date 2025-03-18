@@ -120,6 +120,9 @@ exports.addGameResults = async (req, res) => {
   const queryGetCurrentResults =
     "SELECT * FROM tb_results order by results_id desc LIMIT 1";
 
+  const queryGetLatestResultCount =
+    "SELECT * FROM tb_results WHERE result_count != 0 order by results_id desc LIMIT 1";
+
   const queryFindResultsUsingRowToLatest =
     "SELECT results_id, num_posCol, num_posRow FROM tb_results WHERE result_name != 'Tie' order by results_id desc";
 
@@ -130,7 +133,7 @@ exports.addGameResults = async (req, res) => {
     "SELECT result_name, tie_count, num_posCol, num_posRow FROM tb_results WHERE main_resultCol = 1 order by results_id desc LIMIT 1";
 
   const queryAddResults =
-    "INSERT INTO tb_results(`result_name`, `tie_count`, `main_resultCol`, `num_posCol`, `num_posRow`, `timestamp`) VALUE(?, ?, ?, ?, ?, NOW())";
+    "INSERT INTO tb_results(`result_name`, `result_count`, `tie_count`, `main_resultCol`, `num_posCol`, `num_posRow`, `timestamp`) VALUE(?, ?, ?, ?, ?, ?, NOW())";
 
   const queryUpdateMainColumnResults =
     "UPDATE tb_results SET tie_count = ?,  main_resultCol = ? WHERE results_id = ?";
@@ -169,8 +172,6 @@ exports.addGameResults = async (req, res) => {
     const isPrevResultMatchToCurrent =
       currentResults?.result_name == result_name;
 
-    const isPrevResultPlayer = previousMainResult?.result_name == "Player";
-    const isPrevResultBanker = previousMainResult?.result_name == "Banker";
     const isPrevResultTie = currentResults?.result_name == "Tie";
     const isPrevLocalResultsBanker = currentResults?.result_name == "Banker";
     const isPrevLocalResultsPlayer = currentResults?.result_name == "Player";
@@ -212,11 +213,14 @@ exports.addGameResults = async (req, res) => {
       return findTakenColRow;
     }
 
+    const getLatestResultCount = await databaseQuery(queryGetLatestResultCount);
+    const latestResultCount = getLatestResultCount[0];
+
     if (isBoardDataEmpty) {
       if (isResultsTie) {
-        await databaseQuery(queryAddResults, [result_name, 1, 0, 1, 1]);
+        await databaseQuery(queryAddResults, [result_name, 0, 1, 0, 1, 1]);
       } else {
-        await databaseQuery(queryAddResults, [result_name, 0, 1, 1, 1]);
+        await databaseQuery(queryAddResults, [result_name, 1, 0, 1, 1, 1]);
       }
       const resultsQueryGetResults = await databaseQuery(queryGetResults);
       const resultsQueryGetResultsExceptTie = await databaseQuery(
@@ -235,6 +239,7 @@ exports.addGameResults = async (req, res) => {
             result_name,
             0,
             0,
+            0,
             currentResults?.num_posCol + 1,
             currentResults?.num_posRow,
           ]);
@@ -243,6 +248,7 @@ exports.addGameResults = async (req, res) => {
             const colIncrement = currentResults?.num_posCol + 1;
             await databaseQuery(queryAddResults, [
               result_name,
+              0,
               0,
               0,
               colIncrement,
@@ -254,6 +260,7 @@ exports.addGameResults = async (req, res) => {
               result_name,
               0,
               0,
+              0,
               currentResults?.num_posCol,
               rowIncrement,
             ]);
@@ -261,9 +268,10 @@ exports.addGameResults = async (req, res) => {
         }
       }
 
-      if (isPrevResultPlayer) {
+      if (isPrevLocalResultsPlayer) {
         await databaseQuery(queryAddResults, [
           result_name,
+          latestResultCount?.result_count + 1,
           0,
           1,
           resultsUsingColumn?.num_posCol + 1,
@@ -275,6 +283,7 @@ exports.addGameResults = async (req, res) => {
         if (isPreviousResultNotFound && isSecondResultNotFound) {
           await databaseQuery(queryAddResults, [
             result_name,
+            0,
             currentResults?.tie_count,
             2,
             currentResults?.num_posCol,
@@ -294,12 +303,12 @@ exports.addGameResults = async (req, res) => {
 
         const secResultsCol = secondaryResult.num_posCol;
         const secResultsRow = secondaryResult.num_posRow;
-
         // is secondary results is exist?
         if (!isSecondResultNotFound) {
           if (secResultsRow >= 6) {
             await databaseQuery(queryAddResults, [
               result_name,
+              0,
               0,
               1,
               secResultsCol + 1,
@@ -311,6 +320,7 @@ exports.addGameResults = async (req, res) => {
                 result_name,
                 0,
                 0,
+                0,
                 currentResults?.num_posCol + 1,
                 currentResults?.num_posRow,
               ]);
@@ -320,12 +330,14 @@ exports.addGameResults = async (req, res) => {
                   result_name,
                   0,
                   0,
+                  0,
                   secResultsCol + 1,
-                  currentResults?.num_posRow,
+                  1,
                 ]);
               } else {
                 await databaseQuery(queryAddResults, [
                   result_name,
+                  0,
                   0,
                   0,
                   secResultsCol,
@@ -345,6 +357,7 @@ exports.addGameResults = async (req, res) => {
             result_name,
             0,
             0,
+            0,
             currentResults?.num_posCol + 1,
             currentResults?.num_posRow,
           ]);
@@ -353,6 +366,7 @@ exports.addGameResults = async (req, res) => {
             const colIncrement = currentResults?.num_posCol + 1;
             await databaseQuery(queryAddResults, [
               result_name,
+              0,
               0,
               0,
               colIncrement,
@@ -364,6 +378,7 @@ exports.addGameResults = async (req, res) => {
               result_name,
               0,
               0,
+              0,
               currentResults?.num_posCol,
               rowIncrement,
             ]);
@@ -373,6 +388,7 @@ exports.addGameResults = async (req, res) => {
       if (isPrevLocalResultsBanker) {
         await databaseQuery(queryAddResults, [
           result_name,
+          latestResultCount?.result_count + 1,
           0,
           1,
           resultsUsingColumn?.num_posCol + 1,
@@ -384,6 +400,7 @@ exports.addGameResults = async (req, res) => {
         if (isPreviousResultNotFound && isSecondResultNotFound) {
           await databaseQuery(queryAddResults, [
             result_name,
+            0,
             currentResults?.tie_count,
             2,
             currentResults?.num_posCol,
@@ -409,6 +426,7 @@ exports.addGameResults = async (req, res) => {
             await databaseQuery(queryAddResults, [
               result_name,
               0,
+              0,
               1,
               secResultsCol + 1,
               currentResults?.num_posRow,
@@ -417,6 +435,7 @@ exports.addGameResults = async (req, res) => {
             if (isNumColAndRowTaken() || isCurrentResultRowsDuplicate) {
               await databaseQuery(queryAddResults, [
                 result_name,
+                0,
                 0,
                 0,
                 currentResults?.num_posCol + 1,
@@ -428,12 +447,14 @@ exports.addGameResults = async (req, res) => {
                   result_name,
                   0,
                   0,
+                  0,
                   secResultsCol + 1,
                   1,
                 ]);
               } else {
                 await databaseQuery(queryAddResults, [
                   result_name,
+                  0,
                   0,
                   0,
                   secResultsCol,
@@ -454,6 +475,7 @@ exports.addGameResults = async (req, res) => {
         if (currentResults?.main_resultCol == 2) {
           await databaseQuery(queryAddResults, [
             result_name,
+            0,
             currentResults?.tie_count + 1,
             0,
             currentResults?.num_posCol,
@@ -468,6 +490,7 @@ exports.addGameResults = async (req, res) => {
         } else {
           await databaseQuery(queryAddResults, [
             result_name,
+            0,
             1,
             0,
             currentResults?.num_posCol,
@@ -504,6 +527,7 @@ exports.addGameResults = async (req, res) => {
 
         await databaseQuery(queryAddResults, [
           result_name,
+          0,
           tieCountIncrement,
           0,
           currentResults?.num_posCol,
@@ -532,19 +556,51 @@ exports.addGameResults = async (req, res) => {
 };
 
 exports.secondaryAddGameResults = async (req, res) => {
+  const queryFindColRowResults =
+    "SELECT results_id, num_posCol, num_posRow FROM tb_results WHERE num_posCol = ? AND num_posRow = ?";
+
+  const queryGetAllBigEyeBoyResults =
+    "SELECT results_id, bigEyeBoy_resultName, bigEyeBoy_numPosCol, bigEyeBoy_numPosRow FROM tb_results WHERE result_name != 'Tie' AND bigEyeBoy_resultName != Null";
+
   const queryGetThreeLatestColResults =
-    "SELECT DISTINCT result_name, num_posCol FROM tb_results order by num_posCol desc LIMIT 3;";
+    "SELECT result_name, num_posCol FROM tb_results WHERE result_name != 'Tie' order by result_count desc LIMIT 3";
+
+  const queryGetTwoLatestResults =
+    "SELECT * FROM tb_results WHERE result_name != 'Tie' order by results_id desc LIMIT 2";
 
   const queryGetLatestResults =
-    "SELECT * FROM tb_results order by results_id desc LIMIT 1";
+    "SELECT * FROM tb_results WHERE result_name != 'Tie' order by results_id desc LIMIT 1";
+
+  const queryGetPreviousResults =
+    "SELECT results_id, bigEyeBoy_numPosCol, bigEyeBoy_numPosRow FROM tb_results WHERE result_name != 'Tie' order by results_id desc LIMIT 1 OFFSET 1";
 
   const queryGetAllColumnDataFromResults =
-    "SELECT results_id, num_posCol FROM tb_results WHERE num_posCol = ?";
+    "SELECT results_id, num_posCol, num_posRow FROM tb_results WHERE num_posCol = ? AND result_name != 'Tie'";
 
   const queryInsertBigEyeBoyData =
     "UPDATE tb_results SET bigEyeBoy_resultName = ?, bigEyeBoy_numPosCol = ?, bigEyeBoy_numPosRow = ? WHERE results_id = ?";
 
   try {
+    const findColRowTwoResults = await databaseQuery(
+      queryFindColRowResults,
+      [2, 2]
+    );
+
+    const findColRowThreeResults = await databaseQuery(
+      queryFindColRowResults,
+      [3, 1]
+    );
+
+    const isColRowTwoFound = findColRowTwoResults.length > 0;
+    const isColRowThreeFound = findColRowThreeResults.length > 0;
+
+    const getPreviousResults = await databaseQuery(queryGetPreviousResults);
+    const previousResults = getPreviousResults[0];
+
+    const getTwoLatestResults = await databaseQuery(queryGetTwoLatestResults);
+    const firstLatestResults = getTwoLatestResults[0];
+    const secondLatestResults = getTwoLatestResults[1];
+
     const getThreeLatestResults = await databaseQuery(
       queryGetThreeLatestColResults
     );
@@ -557,8 +613,6 @@ exports.secondaryAddGameResults = async (req, res) => {
       queryGetAllColumnDataFromResults,
       [firstLatestColResults?.num_posCol]
     );
-
-    console.log(firstAllColumnDataFromResults);
 
     const secondAllColumnDataFromResults = await databaseQuery(
       queryGetAllColumnDataFromResults,
@@ -573,16 +627,17 @@ exports.secondaryAddGameResults = async (req, res) => {
     const getLatestResults = await databaseQuery(queryGetLatestResults);
     const latestResults = getLatestResults[0];
 
-    const isColRowTwoHasData =
+    const isColRowTwoHandleCurrentResults =
       latestResults?.num_posCol == 2 && latestResults?.num_posRow == 2;
-    const isColRowThreeHasData =
+    const isColRowThreeHandleCurrentResults =
       latestResults?.num_posCol == 3 && latestResults?.num_posRow == 1;
 
-    if (isColRowTwoHasData) {
-      if (
-        firstAllColumnDataFromResults.length ==
-        secondAllColumnDataFromResults.length
-      ) {
+    const firstColumnLength = firstAllColumnDataFromResults.length;
+    const secondColumnLength = secondAllColumnDataFromResults.length;
+    const thirdColumnLength = thirdAllColumnDataFromResults.length;
+
+    if (isColRowTwoFound && isColRowTwoHandleCurrentResults) {
+      if (firstColumnLength <= secondColumnLength) {
         await databaseQuery(queryInsertBigEyeBoyData, [
           "Red",
           1,
@@ -597,11 +652,19 @@ exports.secondaryAddGameResults = async (req, res) => {
           latestResults?.results_id,
         ]);
       }
-    } else if (isColRowThreeHasData) {
-      if (
-        firstAllColumnDataFromResults.length ==
-        secondAllColumnDataFromResults.length
-      ) {
+
+      const resultsData = await databaseQuery(queryGetAllBigEyeBoyResults);
+
+      return res.status(OK).send({
+        message: "Successfully added detail!",
+        data: resultsData,
+      });
+    } else if (
+      !isColRowTwoFound &&
+      isColRowThreeFound &&
+      isColRowThreeHandleCurrentResults
+    ) {
+      if (firstColumnLength == secondColumnLength) {
         await databaseQuery(queryInsertBigEyeBoyData, [
           "Red",
           1,
@@ -615,11 +678,92 @@ exports.secondaryAddGameResults = async (req, res) => {
           1,
           latestResults?.results_id,
         ]);
+      }
+
+      const resultsData = await databaseQuery(queryGetAllBigEyeBoyResults);
+
+      return res.status(OK).send({
+        message: "Successfully added detail!",
+        data: resultsData,
+      });
+    }
+
+    const firstNameResult = firstLatestResults?.result_name;
+    const secondNameResult = secondLatestResults?.result_name;
+    const isPrevNameResultNotMatchToCurrent =
+      firstNameResult != secondNameResult;
+
+    const isLatestResultsReachColRowTwo =
+      (latestResults?.num_posCol >= 2 && latestResults?.num_posRow >= 2) ||
+      (latestResults?.num_posCol >= 3 && latestResults?.num_posRow >= 1);
+
+    if (isLatestResultsReachColRowTwo && isPrevNameResultNotMatchToCurrent) {
+      if (
+        firstColumnLength == secondColumnLength && // Banker, Player, Banker
+        secondColumnLength == thirdColumnLength
+      ) {
+        await databaseQuery(queryInsertBigEyeBoyData, [
+          "Red",
+          1,
+          1,
+          latestResults?.results_id,
+        ]);
+      } else {
+        await databaseQuery(queryInsertBigEyeBoyData, [
+          "Blue",
+          previousResults?.bigEyeBoy_numPosCol + 1,
+          1,
+          latestResults?.results_id,
+        ]);
+      }
+    } else {
+      if (isLatestResultsReachColRowTwo) {
+        if (
+          firstColumnLength <= secondColumnLength &&
+          firstLatestColResults?.result_name !=
+            secondLatestColResults?.result_name
+        ) {
+          await databaseQuery(queryInsertBigEyeBoyData, [
+            "Red",
+            1,
+            1,
+            latestResults?.results_id,
+          ]);
+        } else if (
+          firstColumnLength > secondColumnLength &&
+          firstColumnLength - 1 == secondColumnLength
+        ) {
+          await databaseQuery(queryInsertBigEyeBoyData, [
+            "Blue",
+            previousResults?.bigEyeBoy_numPosCol + 1,
+            previousResults?.bigEyeBoy_numPosRow,
+            latestResults?.results_id,
+          ]);
+        } else if (firstColumnLength > secondColumnLength) {
+          if (latestResults?.num_posRow > 6) {
+            await databaseQuery(queryInsertBigEyeBoyData, [
+              "Red",
+              previousResults?.bigEyeBoy_numPosCol + 1,
+              previousResults?.bigEyeBoy_numPosRow,
+              latestResults?.results_id,
+            ]);
+          } else {
+            await databaseQuery(queryInsertBigEyeBoyData, [
+              "Red",
+              previousResults?.bigEyeBoy_numPosCol,
+              previousResults?.bigEyeBoy_numPosRow + 1,
+              latestResults?.results_id,
+            ]);
+          }
+        }
       }
     }
 
+    const resultsData = await databaseQuery(queryGetAllBigEyeBoyResults);
+
     return res.status(OK).send({
       message: "Successfully added detail!",
+      data: resultsData,
     });
   } catch (error) {
     return res.status(internalServer).send({

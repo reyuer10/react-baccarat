@@ -65,9 +65,11 @@ const fetchDeleteLatestGameResults = async () => {
 
 const fetchAddDetailGameResults = async () => {
   try {
-    await axios.post(
+    const response = await axios.get(
       `${import.meta.env.VITE_HOST}/${import.meta.env.VITE_ADD_DETAIL_GAME}`
     );
+
+    return response.data;
   } catch (error) {
     throw error;
   }
