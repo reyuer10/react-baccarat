@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import BigRoad from './components/BigRoad'
-import { fetchAddResults, fetchDeleteLatestGameResults, fetchGetResults, fetchResetGameResults } from './services/gameModifiedApi'
+import { fetchAddDetailGameResults, fetchAddResults, fetchDeleteLatestGameResults, fetchGetResults, fetchResetGameResults } from './services/gameModifiedApi'
 
 import {
   generateBigEyeBoyData,
@@ -32,6 +32,7 @@ function App() {
 
   const [resultsBoardData, setResultsBoardData] = useState([])
   const [resultBoardMarkerData, setResultsBoardMarkerData] = useState([])
+  const [round, setRound] = useState(0)
   const handleEnterKeyCode = async (e) => {
     let keyPress = e.key
     try {
@@ -40,18 +41,22 @@ function App() {
           const response = await fetchAddResults({
             result_name: "Player",
           })
+
+          await fetchAddDetailGameResults()
           setResultsBoardData(response.bigRoadData);
           setResultsBoardMarkerData(response.markerRoadData);
         } else if (keySequence == 2) {
           const response = await fetchAddResults({
             result_name: "Banker",
           })
+          await fetchAddDetailGameResults()
           setResultsBoardData(response.bigRoadData);
           setResultsBoardMarkerData(response.markerRoadData)
         } else if (keySequence == 3) {
           const response = await fetchAddResults({
             result_name: "Tie",
           })
+          await fetchAddDetailGameResults()
           setResultsBoardData(response.bigRoadData);
           setResultsBoardMarkerData(response.markerRoadData)
         } else if (keySequence == 4) {
@@ -95,7 +100,6 @@ function App() {
     const handleFetchGameResults = async () => {
       try {
         const response = await fetchGetResults();
-        // console.log(response)
         setResultsBoardData(response.bigRoadData);
         setResultsBoardMarkerData(response.markerRoadData)
 
@@ -115,9 +119,10 @@ function App() {
       <div className='border col-span-24 row-span-1'>
         <Header
           handleFetchResetGameResults={handleFetchResetGameResults}
+          round={round}
         />
       </div>
-      <div className='max-[1600px]:hidden border col-span-24 row-span-6 font-bold flex roboto-mono-900 relative bg-gray-50 overflow-x-hidden'>
+      <div className='max-[1600px]:hidden border-6 border-gray-200 col-span-24 row-span-6 font-bold flex roboto-mono-900 relative bg-gray-50 overflow-x-hidden'>
         <div className='absolute opacity-20 z-10 flex justify-center items-center h-full w-full '>
           <p className=' text-[100px] tracking-wider'>BIG ROAD</p>
         </div>
@@ -133,11 +138,11 @@ function App() {
           })}
         </div>
       </div>
-      <div className='max-[1600px]:hidden border col-span-24 row-span-4 font-bold flex roboto-mono-900 relative bg-gray-50 overflow-x-hidden'>
+      <div className='max-[1600px]:hidden border-4 border-gray-200 col-span-24 row-span-4 font-bold flex roboto-mono-900 relative bg-gray-50 overflow-x-hidden'>
         <div className='absolute opacity-20 z-10 flex justify-center items-center h-full w-full'>
-          <p className=' text-[100px] tracking-wider'>BIG EYE BOY</p>
+          <p className=' text-[80px] tracking-wider'>BIG EYE BOY</p>
         </div>
-        <div className='flex z-20 w-full border-t-4 border-gray-300'>
+        <div className='flex z-20 w-full'>
           {boardData.bigEyeBoy.map((e, index) => {
             return (
               <BigEyeBoy e={e} key={index} />
@@ -145,11 +150,11 @@ function App() {
           })}
         </div>
       </div>
-      <div className='max-[1600px]:hidden border col-span-12 row-span-4 font-bold flex roboto-mono-900 relative bg-gray-50 overflow-x-hidden'>
+      <div className='max-[1600px]:hidden border-4 border-gray-200 col-span-12 row-span-4 font-bold flex roboto-mono-900 relative bg-gray-50 overflow-x-hidden'>
         <div className='absolute opacity-20 z-10 flex justify-center items-center h-full w-full'>
-          <p className=' text-[100px] tracking-wider'>SMALL ROAD</p>
-        </div> 
-        <div className='flex z-20 border-t-4 w-full border-gray-300'>
+          <p className=' text-[60px] tracking-wider'>SMALL ROAD</p>
+        </div>
+        <div className='flex z-20 w-full'>
           {boardData.smallRoad.map((sr, index) => {
             return (
               <SmallRoad sr={sr} key={index} />
@@ -157,11 +162,11 @@ function App() {
           })}
         </div>
       </div>
-      <div className='max-[1600px]:hidden border col-span-12 row-span-4 font-bold flex roboto-mono-900 relative bg-gray-50 overflow-x-hidden'>
+      <div className='max-[1600px]:hidden border-4 border-gray-200 col-span-12 row-span-4 font-bold flex roboto-mono-900 relative bg-gray-50 overflow-x-hidden'>
         <div className='absolute opacity-20 z-10 flex justify-center items-center h-full w-full'>
-          <p className='text-[100px] tracking-wider'>COCKROACH PIG</p>
+          <p className='text-[60px] tracking-wider'>COCKROACH PIG</p>
         </div>
-        <div className='flex z-20 border-t-4 w-full border-gray-300'>
+        <div className='flex z-20 w-full'>
           {boardData.cockroachPig.map((cp, index) => {
             return (
               <CockroachPig cp={cp} key={index} />
@@ -169,11 +174,11 @@ function App() {
           })}
         </div>
       </div>
-      <div className='max-[1600px]:hidden border col-span-24 row-span-6 font-bold flex roboto-mono-900 relative bg-gray-50 overflow-x-hidden'>
+      <div className='max-[1600px]:hidden border-6 border-gray-200 col-span-24 row-span-6 font-bold flex roboto-mono-900 relative bg-gray-50 overflow-x-hidden'>
         <div className='absolute opacity-20 z-10 flex justify-center items-center h-full w-full'>
           <p className=' text-[100px] tracking-wider'>MARKER ROAD</p>
         </div>
-        <div className='flex z-20 border w-full'>
+        <div className='flex z-20 w-full'>
           {boardData.markerRoad.map((m, index) => {
             return (
               <MarkerRoad m={m} key={index} resultBoardMarkerData={resultBoardMarkerData} />

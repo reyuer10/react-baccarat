@@ -63,10 +63,21 @@ const fetchDeleteLatestGameResults = async () => {
   }
 };
 
+const fetchAddDetailGameResults = async () => {
+  try {
+    await axios.post(
+      `${import.meta.env.VITE_HOST}/${import.meta.env.VITE_ADD_DETAIL_GAME}`
+    );
+  } catch (error) {
+    throw error;
+  }
+};
+
 export {
   fetchAddResults,
   fetchGetResults,
   fetchResetGameResults,
   fetchNewGameResults,
   fetchDeleteLatestGameResults,
+  fetchAddDetailGameResults,
 };

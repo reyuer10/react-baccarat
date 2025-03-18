@@ -1,11 +1,11 @@
 export const useCostumizeResults = () => {
   const handleFormatStyleResults = (results) => {
     if (results == "P")
-      return "border text-white outline-2 outline-white ring-4 bg-cyan-600 ring-cyan-600 shadow-lg shadow-gray-500";
+      return "border text-white outline outline-white ring-3 bg-cyan-600 ring-cyan-600 shadow-lg shadow-gray-500";
     if (results == "B")
-      return "border text-white outline-2 outline-white ring-4 bg-red-600 ring-red-600 shadow-lg shadow-gray-500";
+      return "border text-white outline outline-white ring-3 bg-red-600 ring-red-600 shadow-lg shadow-gray-500";
     if (results == "T")
-      return "border text-white outline-2 outline-white ring-4 bg-green-600 ring-green-600 shadow-lg shadow-gray-500";
+      return "border text-white outline outline-white ring-3 bg-green-600 ring-green-600 shadow-lg shadow-gray-500";
   };
 
   const handleFormatResults = (results) => {
