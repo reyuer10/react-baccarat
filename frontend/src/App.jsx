@@ -15,6 +15,7 @@ import Header from './components/Header'
 import BigEyeBoy from './components/BigEyeBoy'
 import SmallRoad from './components/SmallRoad'
 import CockroachPig from './components/CockroachPig'
+import Predictions from './components/Predictions'
 
 function App() {
   let keySequence = ''
@@ -32,6 +33,8 @@ function App() {
 
   const [resultsBoardData, setResultsBoardData] = useState([])
   const [resultBoardMarkerData, setResultsBoardMarkerData] = useState([])
+  const [resultBigEyeBoyData, setResultBigEyeBoyData] = useState([])
+
   const [round, setRound] = useState(0)
   const handleEnterKeyCode = async (e) => {
     let keyPress = e.key
@@ -43,7 +46,7 @@ function App() {
           })
 
           const responseFromBigEyeBoyData = await fetchAddDetailGameResults();
-          console.log(responseFromBigEyeBoyData)
+          setResultBigEyeBoyData(responseFromBigEyeBoyData)
           setResultsBoardData(response.bigRoadData);
           setResultsBoardMarkerData(response.markerRoadData);
         } else if (keySequence == 2) {
@@ -51,7 +54,7 @@ function App() {
             result_name: "Banker",
           })
           const responseFromBigEyeBoyData = await fetchAddDetailGameResults();
-          console.log(responseFromBigEyeBoyData)
+          setResultBigEyeBoyData(responseFromBigEyeBoyData)
           setResultsBoardData(response.bigRoadData);
           setResultsBoardMarkerData(response.markerRoadData)
         } else if (keySequence == 3) {
@@ -59,8 +62,7 @@ function App() {
             result_name: "Tie",
           })
           const responseFromBigEyeBoyData = await fetchAddDetailGameResults();
-          console.log(responseFromBigEyeBoyData)
-
+          setResultBigEyeBoyData(responseFromBigEyeBoyData)
           setResultsBoardData(response.bigRoadData);
           setResultsBoardMarkerData(response.markerRoadData)
         } else if (keySequence == 4) {
@@ -104,6 +106,7 @@ function App() {
     const handleFetchGameResults = async () => {
       try {
         const response = await fetchGetResults();
+        setResultBigEyeBoyData(response.bigEyeBoyData)
         setResultsBoardData(response.bigRoadData);
         setResultsBoardMarkerData(response.markerRoadData)
 
@@ -149,7 +152,7 @@ function App() {
         <div className='flex z-20 w-full'>
           {boardData.bigEyeBoy.map((e, index) => {
             return (
-              <BigEyeBoy e={e} key={index} />
+              <BigEyeBoy e={e} key={index} bigEyeBoyData={resultBigEyeBoyData} />
             )
           })}
         </div>
@@ -178,7 +181,7 @@ function App() {
           })}
         </div>
       </div>
-      <div className='max-[1600px]:hidden border-6 border-gray-200 col-span-24 row-span-6 font-bold flex roboto-mono-900 relative bg-gray-50 overflow-x-hidden'>
+      <div className='max-[1600px]:hidden border-6 border-gray-200 col-span-21 row-span-6 font-bold flex roboto-mono-900 relative bg-gray-50 overflow-x-hidden'>
         <div className='absolute opacity-20 z-10 flex justify-center items-center h-full w-full'>
           <p className=' text-[100px] tracking-wider'>MARKER ROAD</p>
         </div>
@@ -190,42 +193,11 @@ function App() {
           })}
         </div>
       </div>
+      <div className='col-span-3 row-span-6 border-6 border-gray-200 shadow-inner shadow-gray-500 flex justify-center flex-col items-center'>
+        <Predictions />
+      </div>
     </div>
   )
 }
 
 export default App
-// h-screen flex flex-col space-y-4 p-4 bg-lime-50
-// <div className=''>
-// <div className='space-x-2'>
-//   <Header />
-// </div>
-// <div className= font-bold flex roboto-mono-900 relative bg-gray-50'>
-//   <div className='absolute opacity-20 z-10 flex justify-center items-center h-full w-full'>
-//     <p className=' text-[100px] tracking-wider'>BIG ROAD</p>
-//   </div>
-//   <div className='flex z-20 border'>
-//     {/* {boardData.bigRoad.map((b, index) => {
-//       return (
-//         <BigRoad
-//           key={index}
-//           b={b}
-//           resultsBoardData={resultsBoardData}
-//         />
-//       )
-//     })} */}
-//   </div>
-// </div>
-// <div className= font-bold flex  roboto-mono-900 relative bg-gray-50'>
-//   <div className='absolute opacity-20 z-10 flex justify-center items-center h-full w-full'>
-//     <p className=' text-[100px] tracking-wider '>MARKER ROAD</p>
-//   </div>
-//   <div className='flex z-20 border'>
-//     {/* {boardData.markerRoad.map((m, index) => {
-//       return (
-//         <MarkerRoad m={m} key={index} resultBoardMarkerData={resultBoardMarkerData} />
-//       )
-//     })} */}
-//   </div>
-// </div>
-// </div>

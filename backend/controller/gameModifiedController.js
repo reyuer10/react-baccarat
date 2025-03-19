@@ -26,14 +26,18 @@ exports.getGameResults = async (req, res) => {
   const queryGetBoardResults = "SELECT * FROM tb_results";
   const queryGetResultsExceptTie =
     "SELECT * FROM tb_results WHERE result_name != 'Tie'";
+  const queryGetAllBigEyeBoyResults =
+    "SELECT bigEyeBoy_resultName as `name`, bigEyeBoy_numPosCol as `column`, bigEyeBoy_numPosRow as `row` FROM tb_results WHERE result_name != 'Tie' AND bigEyeBoy_resultName != ''";
 
   try {
+    const resultsData = await databaseQuery(queryGetAllBigEyeBoyResults);
     const getBoardData = await databaseQuery(queryGetBoardResults);
     const getBoardDataExceptTie = await databaseQuery(queryGetResultsExceptTie);
 
     return res.status(OK).send({
       bigRoadData: getBoardDataExceptTie,
       markerRoadData: getBoardData,
+      bigEyeBoyData: resultsData,
     });
   } catch (error) {
     return res.status(internalServer).send({
@@ -133,7 +137,7 @@ exports.addGameResults = async (req, res) => {
     "SELECT result_name, tie_count, num_posCol, num_posRow FROM tb_results WHERE main_resultCol = 1 order by results_id desc LIMIT 1";
 
   const queryAddResults =
-    "INSERT INTO tb_results(`result_name`, `result_count`, `tie_count`, `main_resultCol`, `num_posCol`, `num_posRow`, `timestamp`) VALUE(?, ?, ?, ?, ?, ?, NOW())";
+    "INSERT INTO tb_results(`result_name`, `result_count`, `tie_count`, `main_resultCol`, `num_posCol`, `num_posRow`, `group_count`, `timestamp`) VALUE(?, ?, ?, ?, ?, ?, ?, NOW())";
 
   const queryUpdateMainColumnResults =
     "UPDATE tb_results SET tie_count = ?,  main_resultCol = ? WHERE results_id = ?";
@@ -218,9 +222,9 @@ exports.addGameResults = async (req, res) => {
 
     if (isBoardDataEmpty) {
       if (isResultsTie) {
-        await databaseQuery(queryAddResults, [result_name, 0, 1, 0, 1, 1]);
+        await databaseQuery(queryAddResults, [result_name, 0, 1, 0, 1, 1, 0]);
       } else {
-        await databaseQuery(queryAddResults, [result_name, 1, 0, 1, 1, 1]);
+        await databaseQuery(queryAddResults, [result_name, 1, 0, 1, 1, 1, 1]);
       }
       const resultsQueryGetResults = await databaseQuery(queryGetResults);
       const resultsQueryGetResultsExceptTie = await databaseQuery(
@@ -242,6 +246,7 @@ exports.addGameResults = async (req, res) => {
             0,
             currentResults?.num_posCol + 1,
             currentResults?.num_posRow,
+            latestResultCount?.result_count,
           ]);
         } else {
           if (isNumColAndRowTaken() || isCurrentResultRowsDuplicate) {
@@ -253,6 +258,7 @@ exports.addGameResults = async (req, res) => {
               0,
               colIncrement,
               currentResults?.num_posRow,
+              latestResultCount?.result_count,
             ]);
           } else {
             const rowIncrement = currentResults?.num_posRow + 1;
@@ -263,6 +269,7 @@ exports.addGameResults = async (req, res) => {
               0,
               currentResults?.num_posCol,
               rowIncrement,
+              latestResultCount?.result_count,
             ]);
           }
         }
@@ -276,6 +283,7 @@ exports.addGameResults = async (req, res) => {
           1,
           resultsUsingColumn?.num_posCol + 1,
           1,
+          latestResultCount?.result_count + 1,
         ]);
       } else if (isPrevResultTie) {
         const isPreviousResultNotFound = !previousMainResult;
@@ -288,6 +296,7 @@ exports.addGameResults = async (req, res) => {
             2,
             currentResults?.num_posCol,
             currentResults?.num_posRow,
+            latestResultCount?.result_count,
           ]);
 
           const resultsQueryGetResults = await databaseQuery(queryGetResults);
@@ -313,6 +322,7 @@ exports.addGameResults = async (req, res) => {
               1,
               secResultsCol + 1,
               currentResults?.num_posRow,
+              latestResultCount?.result_count,
             ]);
           } else {
             if (isNumColAndRowTaken() || isCurrentResultRowsDuplicate) {
@@ -323,6 +333,7 @@ exports.addGameResults = async (req, res) => {
                 0,
                 currentResults?.num_posCol + 1,
                 currentResults?.num_posRow,
+                latestResultCount?.result_count,
               ]);
             } else {
               if (secondaryResult?.result_name == "Player") {
@@ -333,6 +344,7 @@ exports.addGameResults = async (req, res) => {
                   0,
                   secResultsCol + 1,
                   1,
+                  latestResultCount?.result_count,
                 ]);
               } else {
                 await databaseQuery(queryAddResults, [
@@ -342,6 +354,7 @@ exports.addGameResults = async (req, res) => {
                   0,
                   secResultsCol,
                   currentResults?.num_posRow + 1,
+                  latestResultCount?.result_count,
                 ]);
               }
             }
@@ -360,6 +373,7 @@ exports.addGameResults = async (req, res) => {
             0,
             currentResults?.num_posCol + 1,
             currentResults?.num_posRow,
+            latestResultCount?.result_count,
           ]);
         } else {
           if (isNumColAndRowTaken() || isCurrentResultRowsDuplicate) {
@@ -371,6 +385,7 @@ exports.addGameResults = async (req, res) => {
               0,
               colIncrement,
               currentResults?.num_posRow,
+              latestResultCount?.result_count,
             ]);
           } else {
             const rowIncrement = currentResults?.num_posRow + 1;
@@ -381,6 +396,7 @@ exports.addGameResults = async (req, res) => {
               0,
               currentResults?.num_posCol,
               rowIncrement,
+              latestResultCount?.result_count,
             ]);
           }
         }
@@ -393,6 +409,7 @@ exports.addGameResults = async (req, res) => {
           1,
           resultsUsingColumn?.num_posCol + 1,
           1,
+          latestResultCount?.result_count + 1,
         ]);
       } else if (isPrevResultTie) {
         const isPreviousResultNotFound = !previousMainResult;
@@ -405,6 +422,7 @@ exports.addGameResults = async (req, res) => {
             2,
             currentResults?.num_posCol,
             currentResults?.num_posRow,
+            latestResultCount?.result_count,
           ]);
 
           const resultsQueryGetResults = await databaseQuery(queryGetResults);
@@ -430,6 +448,7 @@ exports.addGameResults = async (req, res) => {
               1,
               secResultsCol + 1,
               currentResults?.num_posRow,
+              latestResultCount?.result_count,
             ]);
           } else {
             if (isNumColAndRowTaken() || isCurrentResultRowsDuplicate) {
@@ -440,6 +459,7 @@ exports.addGameResults = async (req, res) => {
                 0,
                 currentResults?.num_posCol + 1,
                 currentResults?.num_posRow,
+                latestResultCount?.result_count,
               ]);
             } else {
               if (secondaryResult?.result_name == "Banker") {
@@ -450,6 +470,7 @@ exports.addGameResults = async (req, res) => {
                   0,
                   secResultsCol + 1,
                   1,
+                  latestResultCount?.result_count + 1,
                 ]);
               } else {
                 await databaseQuery(queryAddResults, [
@@ -459,6 +480,7 @@ exports.addGameResults = async (req, res) => {
                   0,
                   secResultsCol,
                   currentResults?.num_posRow + 1,
+                  latestResultCount?.result_count,
                 ]);
               }
             }
@@ -480,6 +502,7 @@ exports.addGameResults = async (req, res) => {
             0,
             currentResults?.num_posCol,
             currentResults?.num_posRow,
+            0,
           ]);
 
           await databaseQuery(queryUpdateMainColumnResults, [
@@ -495,6 +518,7 @@ exports.addGameResults = async (req, res) => {
             0,
             currentResults?.num_posCol,
             currentResults?.num_posRow,
+            0,
           ]);
 
           await databaseQuery(queryUpdateMainColumnResults, [
@@ -532,6 +556,7 @@ exports.addGameResults = async (req, res) => {
           0,
           currentResults?.num_posCol,
           currentResults?.num_posRow,
+          0,
         ]);
       }
     }
@@ -556,11 +581,14 @@ exports.addGameResults = async (req, res) => {
 };
 
 exports.secondaryAddGameResults = async (req, res) => {
+  const queryFindLatestResultCount =
+    "SELECT results_id, bigEyeBoy_resultCount as `resultCount` FROM tb_results WHERE bigEyeBoy_resultCount != 0 order by results_id desc LIMIT 1";
+
   const queryFindColRowResults =
     "SELECT results_id, num_posCol, num_posRow FROM tb_results WHERE num_posCol = ? AND num_posRow = ?";
 
   const queryGetAllBigEyeBoyResults =
-    "SELECT results_id, bigEyeBoy_resultName, bigEyeBoy_numPosCol, bigEyeBoy_numPosRow FROM tb_results WHERE result_name != 'Tie' AND bigEyeBoy_resultName != Null";
+    "SELECT bigEyeBoy_resultName as `name`, bigEyeBoy_numPosCol as `column`, bigEyeBoy_numPosRow as `row` FROM tb_results WHERE result_name != 'Tie' AND bigEyeBoy_resultName != ''";
 
   const queryGetThreeLatestColResults =
     "SELECT result_name, num_posCol FROM tb_results WHERE result_name != 'Tie' order by result_count desc LIMIT 3";
@@ -572,15 +600,21 @@ exports.secondaryAddGameResults = async (req, res) => {
     "SELECT * FROM tb_results WHERE result_name != 'Tie' order by results_id desc LIMIT 1";
 
   const queryGetPreviousResults =
-    "SELECT results_id, bigEyeBoy_numPosCol, bigEyeBoy_numPosRow FROM tb_results WHERE result_name != 'Tie' order by results_id desc LIMIT 1 OFFSET 1";
+    "SELECT results_id, bigEyeBoy_resultName, bigEyeBoy_numPosCol, bigEyeBoy_numPosRow FROM tb_results WHERE result_name != 'Tie' order by results_id desc LIMIT 1 OFFSET 1";
 
   const queryGetAllColumnDataFromResults =
-    "SELECT results_id, num_posCol, num_posRow FROM tb_results WHERE num_posCol = ? AND result_name != 'Tie'";
+    "SELECT results_id, num_posCol, num_posRow FROM tb_results WHERE group_count = ? AND result_name != 'Tie'";
 
   const queryInsertBigEyeBoyData =
-    "UPDATE tb_results SET bigEyeBoy_resultName = ?, bigEyeBoy_numPosCol = ?, bigEyeBoy_numPosRow = ? WHERE results_id = ?";
+    "UPDATE tb_results SET bigEyeBoy_resultName = ?, bigEyeBoy_resultCount = ?, bigEyeBoy_numPosCol = ?, bigEyeBoy_numPosRow = ? WHERE results_id = ?";
 
   try {
+    const findLatestResultCount = await databaseQuery(
+      queryFindLatestResultCount
+    );
+
+    const latestResultCount = findLatestResultCount[0];
+
     const findColRowTwoResults = await databaseQuery(
       queryFindColRowResults,
       [2, 2]
@@ -604,6 +638,7 @@ exports.secondaryAddGameResults = async (req, res) => {
     const getThreeLatestResults = await databaseQuery(
       queryGetThreeLatestColResults
     );
+
     const threeLatestResults = getThreeLatestResults;
     const firstLatestColResults = threeLatestResults[0];
     const secondLatestColResults = threeLatestResults[1];
@@ -642,6 +677,7 @@ exports.secondaryAddGameResults = async (req, res) => {
           "Red",
           1,
           1,
+          1,
           latestResults?.results_id,
         ]);
       } else {
@@ -649,16 +685,12 @@ exports.secondaryAddGameResults = async (req, res) => {
           "Blue",
           1,
           1,
+          1,
           latestResults?.results_id,
         ]);
       }
-
       const resultsData = await databaseQuery(queryGetAllBigEyeBoyResults);
-
-      return res.status(OK).send({
-        message: "Successfully added detail!",
-        data: resultsData,
-      });
+      return res.status(OK).send(resultsData);
     } else if (
       !isColRowTwoFound &&
       isColRowThreeFound &&
@@ -669,11 +701,13 @@ exports.secondaryAddGameResults = async (req, res) => {
           "Red",
           1,
           1,
+          1,
           latestResults?.results_id,
         ]);
       } else {
         await databaseQuery(queryInsertBigEyeBoyData, [
           "Blue",
+          1,
           1,
           1,
           latestResults?.results_id,
@@ -697,52 +731,86 @@ exports.secondaryAddGameResults = async (req, res) => {
       (latestResults?.num_posCol >= 2 && latestResults?.num_posRow >= 2) ||
       (latestResults?.num_posCol >= 3 && latestResults?.num_posRow >= 1);
 
-    if (isLatestResultsReachColRowTwo && isPrevNameResultNotMatchToCurrent) {
+    if (
+      (isColRowTwoFound || isColRowThreeFound) &&
+      isPrevNameResultNotMatchToCurrent
+    ) {
       if (
         firstColumnLength == secondColumnLength && // Banker, Player, Banker
         secondColumnLength == thirdColumnLength
       ) {
-        await databaseQuery(queryInsertBigEyeBoyData, [
-          "Red",
-          1,
-          1,
-          latestResults?.results_id,
-        ]);
-      } else {
-        await databaseQuery(queryInsertBigEyeBoyData, [
-          "Blue",
-          previousResults?.bigEyeBoy_numPosCol + 1,
-          1,
-          latestResults?.results_id,
-        ]);
-      }
-    } else {
-      if (isLatestResultsReachColRowTwo) {
-        if (
-          firstColumnLength <= secondColumnLength &&
-          firstLatestColResults?.result_name !=
-            secondLatestColResults?.result_name
-        ) {
+        if (previousResults?.bigEyeBoy_resultName == "Blue") {
           await databaseQuery(queryInsertBigEyeBoyData, [
             "Red",
-            1,
+            latestResultCount?.resultCount + 1,
+            latestResultCount?.resultCount + 1,
             1,
             latestResults?.results_id,
           ]);
-        } else if (
-          firstColumnLength > secondColumnLength &&
-          firstColumnLength - 1 == secondColumnLength
-        ) {
+        } else {
+          await databaseQuery(queryInsertBigEyeBoyData, [
+            "Red",
+            0,
+            latestResultCount?.resultCount,
+            previousResults?.bigEyeBoy_numPosRow + 1,
+            latestResults?.results_id,
+          ]);
+        }
+      } else if (firstColumnLength == secondColumnLength) {
+        if (previousResults?.bigEyeBoy_resultName == "Blue") {
+          await databaseQuery(queryInsertBigEyeBoyData, [
+            "Red",
+            latestResultCount?.resultCount + 1,
+            latestResultCount?.resultCount + 1,
+            1,
+            latestResults?.results_id,
+          ]);
+        } else {
+          await databaseQuery(queryInsertBigEyeBoyData, [
+            "Red",
+            0,
+            latestResultCount?.resultCount,
+            previousResults?.bigEyeBoy_numPosRow + 1,
+            latestResults?.results_id,
+          ]);
+        }
+      } else {
+        if (previousResults?.bigEyeBoy_resultName == "Blue") {
           await databaseQuery(queryInsertBigEyeBoyData, [
             "Blue",
-            previousResults?.bigEyeBoy_numPosCol + 1,
-            previousResults?.bigEyeBoy_numPosRow,
+            0,
+            latestResultCount?.resultCount,
+            previousResults?.bigEyeBoy_numPosRow + 1,
             latestResults?.results_id,
           ]);
-        } else if (firstColumnLength > secondColumnLength) {
-          if (latestResults?.num_posRow > 6) {
+        } else {
+          await databaseQuery(queryInsertBigEyeBoyData, [
+            "Blue",
+            latestResultCount?.resultCount + 1,
+            latestResultCount?.resultCount + 1,
+            1,
+            latestResults?.results_id,
+          ]);
+        }
+      }
+    } else {
+      if (
+        (isColRowTwoFound || isColRowThreeFound) &&
+        isLatestResultsReachColRowTwo
+      ) {
+        if (firstColumnLength <= secondColumnLength) {
+          if (previousResults?.bigEyeBoy_resultName == "Blue") {
             await databaseQuery(queryInsertBigEyeBoyData, [
               "Red",
+              latestResultCount?.resultCount + 1,
+              latestResultCount?.resultCount + 1,
+              1,
+              latestResults?.results_id,
+            ]);
+          } else if (previousResults?.bigEyeBoy_numPosRow > 5) {
+            await databaseQuery(queryInsertBigEyeBoyData, [
+              "Red",
+              0,
               previousResults?.bigEyeBoy_numPosCol + 1,
               previousResults?.bigEyeBoy_numPosRow,
               latestResults?.results_id,
@@ -750,6 +818,41 @@ exports.secondaryAddGameResults = async (req, res) => {
           } else {
             await databaseQuery(queryInsertBigEyeBoyData, [
               "Red",
+              0,
+              previousResults?.bigEyeBoy_numPosCol,
+              previousResults?.bigEyeBoy_numPosRow + 1,
+              latestResults?.results_id,
+            ]);
+          }
+        } else if (secondColumnLength == firstColumnLength - 1) {
+          await databaseQuery(queryInsertBigEyeBoyData, [
+            "Blue",
+            latestResultCount?.resultCount + 1,
+            latestResultCount?.resultCount + 1,
+            1,
+            latestResults?.results_id,
+          ]);
+        } else if (firstColumnLength > secondColumnLength) {
+          if (previousResults?.bigEyeBoy_resultName == "Blue") {
+            await databaseQuery(queryInsertBigEyeBoyData, [
+              "Red",
+              latestResultCount?.resultCount + 1,
+              latestResultCount?.resultCount + 1,
+              previousResults?.bigEyeBoy_numPosRow,
+              latestResults?.results_id,
+            ]);
+          } else if (previousResults?.bigEyeBoy_numPosRow > 5) {
+            await databaseQuery(queryInsertBigEyeBoyData, [
+              "Red",
+              0,
+              previousResults?.bigEyeBoy_numPosCol + 1,
+              previousResults?.bigEyeBoy_numPosRow,
+              latestResults?.results_id,
+            ]);
+          } else {
+            await databaseQuery(queryInsertBigEyeBoyData, [
+              "Red",
+              0,
               previousResults?.bigEyeBoy_numPosCol,
               previousResults?.bigEyeBoy_numPosRow + 1,
               latestResults?.results_id,
@@ -761,10 +864,9 @@ exports.secondaryAddGameResults = async (req, res) => {
 
     const resultsData = await databaseQuery(queryGetAllBigEyeBoyResults);
 
-    return res.status(OK).send({
-      message: "Successfully added detail!",
-      data: resultsData,
-    });
+    console.log(resultsData);
+
+    return res.status(OK).send(resultsData);
   } catch (error) {
     return res.status(internalServer).send({
       message: "Internal Server Error.",
