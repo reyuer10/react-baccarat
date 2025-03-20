@@ -34,6 +34,7 @@ function App() {
   const [resultsBoardData, setResultsBoardData] = useState([])
   const [resultBoardMarkerData, setResultsBoardMarkerData] = useState([])
   const [resultBigEyeBoyData, setResultBigEyeBoyData] = useState([])
+  const [predictionsData, setPredictionsData] = useState([])
 
   const [round, setRound] = useState(0)
   const handleEnterKeyCode = async (e) => {
@@ -46,7 +47,8 @@ function App() {
           })
 
           const responseFromBigEyeBoyData = await fetchAddDetailGameResults();
-          setResultBigEyeBoyData(responseFromBigEyeBoyData)
+          setPredictionsData(responseFromBigEyeBoyData?.predictionsData)
+          setResultBigEyeBoyData(responseFromBigEyeBoyData.bigEyeBoyData)
           setResultsBoardData(response.bigRoadData);
           setResultsBoardMarkerData(response.markerRoadData);
         } else if (keySequence == 2) {
@@ -54,7 +56,8 @@ function App() {
             result_name: "Banker",
           })
           const responseFromBigEyeBoyData = await fetchAddDetailGameResults();
-          setResultBigEyeBoyData(responseFromBigEyeBoyData)
+          setPredictionsData(responseFromBigEyeBoyData?.predictionsData)
+          setResultBigEyeBoyData(responseFromBigEyeBoyData.bigEyeBoyData)
           setResultsBoardData(response.bigRoadData);
           setResultsBoardMarkerData(response.markerRoadData)
         } else if (keySequence == 3) {
@@ -62,11 +65,15 @@ function App() {
             result_name: "Tie",
           })
           const responseFromBigEyeBoyData = await fetchAddDetailGameResults();
-          setResultBigEyeBoyData(responseFromBigEyeBoyData)
+          setPredictionsData(responseFromBigEyeBoyData?.predictionsData)
+          setResultBigEyeBoyData(responseFromBigEyeBoyData.bigEyeBoyData)
           setResultsBoardData(response.bigRoadData);
           setResultsBoardMarkerData(response.markerRoadData)
         } else if (keySequence == 4) {
           const response = await fetchDeleteLatestGameResults();
+          const responseFromBigEyeBoyData = await fetchAddDetailGameResults();
+          setPredictionsData(responseFromBigEyeBoyData?.predictionsData)
+          setResultBigEyeBoyData(response.bigEyeBoyData)
           setResultsBoardData(response.bigRoadData);
           setResultsBoardMarkerData(response.markerRoadData)
         }
@@ -108,8 +115,8 @@ function App() {
         const response = await fetchGetResults();
         setResultBigEyeBoyData(response.bigEyeBoyData)
         setResultsBoardData(response.bigRoadData);
-        setResultsBoardMarkerData(response.markerRoadData)
-
+        setResultsBoardMarkerData(response.markerRoadData);
+        setPredictionsData(response.predictionsData)
       } catch (error) {
         console.log(error);
       }
@@ -181,20 +188,26 @@ function App() {
           })}
         </div>
       </div>
-      <div className='max-[1600px]:hidden border-6 border-gray-200 col-span-21 row-span-6 font-bold flex roboto-mono-900 relative bg-gray-50 overflow-x-hidden'>
+      <div className='max-[1600px]:hidden border-6 border-gray-200 col-span-22 row-span-6 font-bold flex roboto-mono-900 relative bg-gray-50 overflow-x-hidden'>
         <div className='absolute opacity-20 z-10 flex justify-center items-center h-full w-full'>
           <p className=' text-[100px] tracking-wider'>MARKER ROAD</p>
         </div>
         <div className='flex z-20 w-full'>
           {boardData.markerRoad.map((m, index) => {
             return (
-              <MarkerRoad m={m} key={index} resultBoardMarkerData={resultBoardMarkerData} />
+              <MarkerRoad
+                m={m}
+                key={index}
+                resultBoardMarkerData={resultBoardMarkerData}
+              />
             )
           })}
         </div>
       </div>
-      <div className='col-span-3 row-span-6 border-6 border-gray-200 shadow-inner shadow-gray-500 flex justify-center flex-col items-center'>
-        <Predictions />
+      <div className='col-span-2 row-span-6 border-6 border-gray-200 shadow-inner shadow-gray-500 flex justify-center flex-col items-center'>
+        <Predictions
+          predictionsData={predictionsData}
+        />
       </div>
     </div>
   )

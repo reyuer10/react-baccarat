@@ -1,53 +1,90 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 
-function Predictions() {
-    const [predictionData, setPredictionData] = useState([
+function Predictions({ predictionsData }) {
+    const { isRowColTwoOrThreeFound, isBigEyeBoyHasData, isSmallRoadHasData, bigEyeBoy } = predictionsData;
+    console.log(predictionsData)
+
+    const [predictions, setPredictions] = useState([
         {
-            predictionName: "B",
-            predictionBigEyeBoy: null,
-            predictionSmallRoad: null,
-            predictionCockroachPig: null,
-        },
-        {
-            predictionName: "P",
-            predictionBigEyeBoy: null,
-            predictionSmallRoad: null,
-            predictionCockroachPig: null,
+            predictionBanker: "B",
+            predictionPlayer: "P",
+            predBigEyeBoyFromBanker: null,
+            predBigEyeBoyFromPlayer: null,
+            predictionSmallRoadFromBanker: null,
+            predictionSmallRoadFromPlayer: null,
+            predictionCockroachPigFromPlayer: null,
+            predictionCockroachPigFromBanker: null,
         }])
+
+
+    function customizeStyleBigEyeBoy(colorName) {
+        if (isBigEyeBoyHasData) {
+            if (bigEyeBoy?.banker == null) {
+                return ``
+            } else {
+                return `ring-${colorName} bg-${colorName}`
+            }
+        } else {
+            return `opacity-20 bg-gray-400 ring-gray-400`
+        }
+    }
 
 
     return (
         <div className='roboto-mono-900 absolute justify-center flex'>
-            <div className='flex text-center space-x-8'>
-                {predictionData.map((p, index) => {
+            <div>
+                {predictions.map((p, index) => {
+
+                    const styleConvertBigEyeBoyBanker = bigEyeBoy?.banker == "Blue" ? "cyan-600" : "red-500";
+                    const styleConvertBigEyeBoyPlayer = bigEyeBoy?.player == "Blue" ? "cyan-600" : "red-500"
                     return (
                         <div
-                            className='space-y-8'
+                            className={` flex space-x-4 transition-all
+                                ${isRowColTwoOrThreeFound ? "" : "opacity-40"}`}
                             key={index}>
-                            <span
-                                className={`
-                                    text-[56px]
-                                    ${p.predictionBigEyeBoy == null ? "opacity-20" : ""}
-                                    `}
-                            >{p.predictionName}
-                            </span>
-                            <p
-                                className={`
-                                    h-[50px] w-[50px] rounded-full border-6 ring-2
-                                ${p.predictionBigEyeBoy == null ? "bg-gray-600 border-white ring-gray-600 opacity-20" : ""}
+                            <div className='space-y-4 flex flex-col items-center'>
+                                <p className={`${isRowColTwoOrThreeFound ? "bg-red-500" : "bg-gray-400"} text-2xl text-white result-text-shadow border-4 border-white ring-2 ring-red-500 px-[10px] rounded-full`}>
+                                    {p.predictionBanker}
+                                </p>
+                                <p className={`h-[35px] w-[35px] rounded-full border-6 ring-2 border-white
+                             ${customizeStyleBigEyeBoy(styleConvertBigEyeBoyBanker)}
                                 `}
-                            >
-                                {p.predictionBigEyeBoy}
-                            </p>
-                            <p
-                                className={`
-                                h-[50px] w-[50px] rounded-full border-6 ring-2
-                            ${p.predictionBigEyeBoy == null ? "bg-gray-600 border-white ring-gray-600 opacity-20" : ""}
-                            `}
-                            >
-                                {p.predictionSmallRoad}
-                            </p>
-                            <span>{p.predictionCockroachPig}</span>
+                                ></p>
+                                <p className={`h-[35px] w-[35px] rounded-full
+                                ${isSmallRoadHasData ? "" : "bg-gray-400"}`}
+                                >
+                                    {p.predictionSmallRoadFromBanker}
+                                </p>
+                                <p className={`h-[35px] w-[10px] mx-auto rotate-45
+                                ${p.predictionBigEyeBoy == null ? "bg-gray-400" : ""}
+                                `}
+                                >
+                                    {p.predictionCockroachPigFromBanker}
+                                </p>
+                            </div>
+                            <div className='space-y-4 flex flex-col items-center'>
+                                <p className={`${isRowColTwoOrThreeFound ? "bg-cyan-600" : " bg-gray-400"} text-2xl text-white result-text-shadow border-4 border-white ring-2 ring-cyan-600 px-[10px] rounded-full`}>
+                                    {p.predictionPlayer}
+                                </p>
+
+                                <p className={`h-[35px] w-[35px] rounded-full border-6 border-white ring-2
+                                ${isBigEyeBoyHasData ? `ring-${styleConvertBigEyeBoyPlayer}` : "opacity-20 bg-gray-400  ring-gray-400"}
+                                   ${bigEyeBoy?.player == null ? "" : `bg-${styleConvertBigEyeBoyPlayer}`}
+                                `}
+                                ></p>
+                                <p className={`h-[35px] w-[35px] rounded-full
+                                ${isSmallRoadHasData ? "" : "bg-gray-400"}`}
+                                >
+                                    {p.predictionSmallRoadFromPlayer}
+                                </p>
+                                <p className={`h-[35px] w-[10px] mx-auto rotate-45
+                                ${p.predictionBigEyeBoy == null ? "bg-gray-400" : ""}
+                                `}
+                                >
+                                    {p.predictionCockroachPigFromPlayer}
+                                </p>
+                            </div>
+
                         </div>
                     )
                 })}

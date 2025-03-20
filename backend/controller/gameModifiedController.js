@@ -29,15 +29,116 @@ exports.getGameResults = async (req, res) => {
   const queryGetAllBigEyeBoyResults =
     "SELECT bigEyeBoy_resultName as `name`, bigEyeBoy_numPosCol as `column`, bigEyeBoy_numPosRow as `row` FROM tb_results WHERE result_name != 'Tie' AND bigEyeBoy_resultName != ''";
 
+  const queryFindColRowResults =
+    "SELECT results_id, num_posCol, num_posRow FROM tb_results WHERE num_posCol = ? AND num_posRow = ?";
+
+  const queryGetAllColumnDataFromResults =
+    "SELECT results_id, num_posCol, num_posRow FROM tb_results WHERE group_count = ? AND result_name != 'Tie'";
+
+  const queryGetThreeLatestColResults =
+    "SELECT result_name, num_posCol FROM tb_results WHERE result_name != 'Tie' order by result_count desc LIMIT 3";
+
+  const queryGetLatestResults =
+    "SELECT * FROM tb_results WHERE result_name != 'Tie' order by results_id desc LIMIT 1";
+
   try {
+    const getThreeLatestResults = await databaseQuery(
+      queryGetThreeLatestColResults
+    );
+
+    const threeLatestResults = getThreeLatestResults;
+    const firstLatestColResults = threeLatestResults[0];
+    const secondLatestColResults = threeLatestResults[1];
+    const thirdLatestColResults = threeLatestResults[2];
+
     const resultsData = await databaseQuery(queryGetAllBigEyeBoyResults);
     const getBoardData = await databaseQuery(queryGetBoardResults);
     const getBoardDataExceptTie = await databaseQuery(queryGetResultsExceptTie);
+
+    const firstAllColumnDataFromResults = await databaseQuery(
+      queryGetAllColumnDataFromResults,
+      [firstLatestColResults?.num_posCol]
+    );
+
+    const secondAllColumnDataFromResults = await databaseQuery(
+      queryGetAllColumnDataFromResults,
+      [secondLatestColResults?.num_posCol]
+    );
+
+    const thirdAllColumnDataFromResults = await databaseQuery(
+      queryGetAllColumnDataFromResults,
+      [thirdLatestColResults?.num_posCol]
+    );
+
+    const firstColumnLength = firstAllColumnDataFromResults.length;
+    const secondColumnLength = secondAllColumnDataFromResults.length;
+    const thirdColumnLength = thirdAllColumnDataFromResults.length;
+
+    const getLatestResults = await databaseQuery(queryGetLatestResults);
+    const latestResults = getLatestResults[0];
+
+    const isCurrentResultsBlue = latestResults?.result_name == "Player";
+    const isCurrentResultsRed = latestResults?.result_name == "Banker";
+
+    const findColRowTwoResults = await databaseQuery(
+      queryFindColRowResults,
+      [2, 2]
+    );
+
+    const findColRowThreeResults = await databaseQuery(
+      queryFindColRowResults,
+      [3, 1]
+    );
+
+    const isColRowTwoFound = findColRowTwoResults.length > 0;
+    const isColRowThreeFound = findColRowThreeResults.length > 0;
+
+    function bigEyeBoyPrediction(leadName) {
+      if (leadName == "Banker") {
+        if (isCurrentResultsBlue) {
+          if (firstColumnLength == secondColumnLength) {
+            return "Red";
+          } else {
+            return "Blue";
+          }
+        } else {
+          if (firstColumnLength == secondColumnLength) {
+            return "Blue";
+          } else {
+            return "Red";
+          }
+        }
+      } else if (leadName == "Player") {
+        if (isCurrentResultsRed) {
+          if (firstColumnLength == secondColumnLength) {
+            return "Red";
+          } else {
+            return "Blue";
+          }
+        } else {
+          if (firstColumnLength == secondColumnLength) {
+            return "Blue";
+          } else {
+            return "Red";
+          }
+        }
+      }
+    }
 
     return res.status(OK).send({
       bigRoadData: getBoardDataExceptTie,
       markerRoadData: getBoardData,
       bigEyeBoyData: resultsData,
+      predictionsData: {
+        isRowColTwoOrThreeFound: isColRowTwoFound || isColRowThreeFound,
+        isBigEyeBoyHasData: isColRowTwoFound || isColRowThreeFound,
+        isSmallRoadHasData: false,
+        isCockroachPigHasData: false,
+        bigEyeBoy: {
+          banker: bigEyeBoyPrediction("Banker"),
+          player: bigEyeBoyPrediction("Player"),
+        },
+      },
     });
   } catch (error) {
     return res.status(internalServer).send({
@@ -68,6 +169,9 @@ exports.undoGameResults = async (req, res) => {
   const queryUpdateMainResultsCol =
     "UPDATE tb_results SET main_resultCol = 0 WHERE results_id = ?";
 
+  const queryGetAllBigEyeBoyResults =
+    "SELECT bigEyeBoy_resultName as `name`, bigEyeBoy_numPosCol as `column`, bigEyeBoy_numPosRow as `row` FROM tb_results WHERE result_name != 'Tie' AND bigEyeBoy_resultName != ''";
+
   try {
     const getPreviousResults = await databaseQuery(queryGetPreviousResults);
     const getLatestResultsId = await databaseQuery(queryGetLatestResultsId);
@@ -93,12 +197,16 @@ exports.undoGameResults = async (req, res) => {
     }
 
     if (deleteLatestResults) {
+      const getAllBigEyeBoyResults = await databaseQuery(
+        queryGetAllBigEyeBoyResults
+      );
       const resultsQueryGetResults = await databaseQuery(queryGetResults);
       const resultsQueryGetResultsExceptTie = await databaseQuery(
         queryGetResultsExceptTie
       );
       return res.status(OK).send({
         bigRoadData: resultsQueryGetResultsExceptTie,
+        bigEyeBoyData: getAllBigEyeBoyResults,
         markerRoadData: resultsQueryGetResults,
       });
     }
@@ -671,6 +779,41 @@ exports.secondaryAddGameResults = async (req, res) => {
     const secondColumnLength = secondAllColumnDataFromResults.length;
     const thirdColumnLength = thirdAllColumnDataFromResults.length;
 
+    const isCurrentResultsBlue = latestResults?.result_name == "Player";
+    const isCurrentResultsRed = latestResults?.result_name == "Banker";
+
+    function bigEyeBoyPrediction(leadName) {
+      if (leadName == "Banker") {
+        if (isCurrentResultsBlue) {
+          if (firstColumnLength == secondColumnLength) {
+            return "Red";
+          } else {
+            return "Blue";
+          }
+        } else {
+          if (firstColumnLength == secondColumnLength) {
+            return "Blue";
+          } else {
+            return "Red";
+          }
+        }
+      } else if (leadName == "Player") {
+        if (isCurrentResultsRed) {
+          if (firstColumnLength == secondColumnLength) {
+            return "Red";
+          } else {
+            return "Blue";
+          }
+        } else {
+          if (firstColumnLength == secondColumnLength) {
+            return "Blue";
+          } else {
+            return "Red";
+          }
+        }
+      }
+    }
+
     if (isColRowTwoFound && isColRowTwoHandleCurrentResults) {
       if (firstColumnLength <= secondColumnLength) {
         await databaseQuery(queryInsertBigEyeBoyData, [
@@ -690,13 +833,24 @@ exports.secondaryAddGameResults = async (req, res) => {
         ]);
       }
       const resultsData = await databaseQuery(queryGetAllBigEyeBoyResults);
-      return res.status(OK).send(resultsData);
+
+      return res.status(OK).send({
+        bigEyeBoyData: resultsData,
+        predictionsData: {
+          isRowColTwoOrThreeFound: isColRowTwoFound || isColRowThreeFound,
+          isBigEyeBoyHasData: isColRowTwoFound || isColRowThreeFound,
+          bigEyeBoy: {
+            banker: bigEyeBoyPrediction("Banker"),
+            player: bigEyeBoyPrediction("Player"),
+          },
+        },
+      });
     } else if (
       !isColRowTwoFound &&
       isColRowThreeFound &&
       isColRowThreeHandleCurrentResults
     ) {
-      if (firstColumnLength == secondColumnLength) {
+      if (secondColumnLength == thirdColumnLength) {
         await databaseQuery(queryInsertBigEyeBoyData, [
           "Red",
           1,
@@ -717,8 +871,15 @@ exports.secondaryAddGameResults = async (req, res) => {
       const resultsData = await databaseQuery(queryGetAllBigEyeBoyResults);
 
       return res.status(OK).send({
-        message: "Successfully added detail!",
-        data: resultsData,
+        bigEyeBoyData: resultsData,
+        predictionsData: {
+          isRowColTwoOrThreeFound: isColRowTwoFound || isColRowThreeFound,
+          isBigEyeBoyHasData: isColRowTwoFound || isColRowThreeFound,
+          bigEyeBoy: {
+            banker: bigEyeBoyPrediction("Banker"),
+            player: bigEyeBoyPrediction("Player"),
+          },
+        },
       });
     }
 
@@ -731,132 +892,119 @@ exports.secondaryAddGameResults = async (req, res) => {
       (latestResults?.num_posCol >= 2 && latestResults?.num_posRow >= 2) ||
       (latestResults?.num_posCol >= 3 && latestResults?.num_posRow >= 1);
 
+    const redResetColumn = [
+      "Red",
+      latestResultCount?.resultCount + 1,
+      latestResultCount?.resultCount + 1,
+      1,
+      latestResults?.results_id,
+    ];
+
+    const blueResetColumn = [
+      "Blue",
+      latestResultCount?.resultCount + 1,
+      latestResultCount?.resultCount + 1,
+      1,
+      latestResults?.results_id,
+    ];
+
+    const blueIncrementRow = [
+      "Blue",
+      0,
+      latestResultCount?.resultCount,
+      previousResults?.bigEyeBoy_numPosRow + 1,
+      latestResults?.results_id,
+    ];
+
+    const redIncrementRow = [
+      "Red",
+      0,
+      latestResultCount?.resultCount,
+      previousResults?.bigEyeBoy_numPosRow + 1,
+      latestResults?.results_id,
+    ];
+
+    const redIncrementColumn = [
+      "Red",
+      0,
+      previousResults?.bigEyeBoy_numPosCol + 1,
+      previousResults?.bigEyeBoy_numPosRow,
+      latestResults?.results_id,
+    ];
+
     if (
       (isColRowTwoFound || isColRowThreeFound) &&
-      isPrevNameResultNotMatchToCurrent
+      isPrevNameResultNotMatchToCurrent &&
+      latestResults?.result_name !== "Tie"
     ) {
       if (
         firstColumnLength == secondColumnLength && // Banker, Player, Banker
         secondColumnLength == thirdColumnLength
       ) {
         if (previousResults?.bigEyeBoy_resultName == "Blue") {
-          await databaseQuery(queryInsertBigEyeBoyData, [
-            "Red",
-            latestResultCount?.resultCount + 1,
-            latestResultCount?.resultCount + 1,
-            1,
-            latestResults?.results_id,
-          ]);
+          await databaseQuery(queryInsertBigEyeBoyData, redResetColumn);
         } else {
-          await databaseQuery(queryInsertBigEyeBoyData, [
-            "Red",
-            0,
-            latestResultCount?.resultCount,
-            previousResults?.bigEyeBoy_numPosRow + 1,
-            latestResults?.results_id,
-          ]);
+          if (previousResults?.bigEyeBoy_numPosRow > 5) {
+            await databaseQuery(queryInsertBigEyeBoyData, redIncrementColumn);
+          } else {
+            await databaseQuery(queryInsertBigEyeBoyData, redIncrementRow);
+          }
         }
       } else if (firstColumnLength == secondColumnLength) {
-        if (previousResults?.bigEyeBoy_resultName == "Blue") {
-          await databaseQuery(queryInsertBigEyeBoyData, [
-            "Red",
-            latestResultCount?.resultCount + 1,
-            latestResultCount?.resultCount + 1,
-            1,
-            latestResults?.results_id,
-          ]);
+        if (secondColumnLength != thirdColumnLength) {
+          await databaseQuery(queryInsertBigEyeBoyData, blueResetColumn);
+        } else if (previousResults?.bigEyeBoy_resultName == "Blue") {
+          await databaseQuery(queryInsertBigEyeBoyData, redResetColumn);
         } else {
-          await databaseQuery(queryInsertBigEyeBoyData, [
-            "Red",
-            0,
-            latestResultCount?.resultCount,
-            previousResults?.bigEyeBoy_numPosRow + 1,
-            latestResults?.results_id,
-          ]);
+          if (previousResults?.bigEyeBoy_numPosRow > 5) {
+            await databaseQuery(queryInsertBigEyeBoyData, redIncrementColumn);
+          } else {
+            await databaseQuery(queryInsertBigEyeBoyData, redIncrementRow);
+          }
         }
       } else {
-        if (previousResults?.bigEyeBoy_resultName == "Blue") {
-          await databaseQuery(queryInsertBigEyeBoyData, [
-            "Blue",
-            0,
-            latestResultCount?.resultCount,
-            previousResults?.bigEyeBoy_numPosRow + 1,
-            latestResults?.results_id,
-          ]);
+        if (secondColumnLength == thirdColumnLength) {
+          if (previousResults?.bigEyeBoy_numPosRow > 5) {
+            await databaseQuery(queryInsertBigEyeBoyData, redIncrementColumn);
+          } else {
+            await databaseQuery(queryInsertBigEyeBoyData, redIncrementRow);
+          }
         } else {
-          await databaseQuery(queryInsertBigEyeBoyData, [
-            "Blue",
-            latestResultCount?.resultCount + 1,
-            latestResultCount?.resultCount + 1,
-            1,
-            latestResults?.results_id,
-          ]);
+          if (previousResults?.bigEyeBoy_resultName == "Blue") {
+            await databaseQuery(queryInsertBigEyeBoyData, blueIncrementRow);
+          } else {
+            await databaseQuery(queryInsertBigEyeBoyData, blueResetColumn);
+          }
         }
       }
     } else {
       if (
         (isColRowTwoFound || isColRowThreeFound) &&
-        isLatestResultsReachColRowTwo
+        isLatestResultsReachColRowTwo &&
+        latestResults?.result_name !== "Tie"
       ) {
         if (firstColumnLength <= secondColumnLength) {
           if (previousResults?.bigEyeBoy_resultName == "Blue") {
-            await databaseQuery(queryInsertBigEyeBoyData, [
-              "Red",
-              latestResultCount?.resultCount + 1,
-              latestResultCount?.resultCount + 1,
-              1,
-              latestResults?.results_id,
-            ]);
+            console.log("is this console?");
+            await databaseQuery(queryInsertBigEyeBoyData, redResetColumn);
           } else if (previousResults?.bigEyeBoy_numPosRow > 5) {
-            await databaseQuery(queryInsertBigEyeBoyData, [
-              "Red",
-              0,
-              previousResults?.bigEyeBoy_numPosCol + 1,
-              previousResults?.bigEyeBoy_numPosRow,
-              latestResults?.results_id,
-            ]);
+            await databaseQuery(queryInsertBigEyeBoyData, redIncrementColumn);
           } else {
-            await databaseQuery(queryInsertBigEyeBoyData, [
-              "Red",
-              0,
-              previousResults?.bigEyeBoy_numPosCol,
-              previousResults?.bigEyeBoy_numPosRow + 1,
-              latestResults?.results_id,
-            ]);
+            await databaseQuery(queryInsertBigEyeBoyData, redIncrementRow);
           }
         } else if (secondColumnLength == firstColumnLength - 1) {
-          await databaseQuery(queryInsertBigEyeBoyData, [
-            "Blue",
-            latestResultCount?.resultCount + 1,
-            latestResultCount?.resultCount + 1,
-            1,
-            latestResults?.results_id,
-          ]);
+          if (previousResults?.bigEyeBoy_resultName == "Blue") {
+            await databaseQuery(queryInsertBigEyeBoyData, blueIncrementRow);
+          } else {
+            await databaseQuery(queryInsertBigEyeBoyData, blueResetColumn);
+          }
         } else if (firstColumnLength > secondColumnLength) {
           if (previousResults?.bigEyeBoy_resultName == "Blue") {
-            await databaseQuery(queryInsertBigEyeBoyData, [
-              "Red",
-              latestResultCount?.resultCount + 1,
-              latestResultCount?.resultCount + 1,
-              previousResults?.bigEyeBoy_numPosRow,
-              latestResults?.results_id,
-            ]);
+            await databaseQuery(queryInsertBigEyeBoyData, redResetColumn);
           } else if (previousResults?.bigEyeBoy_numPosRow > 5) {
-            await databaseQuery(queryInsertBigEyeBoyData, [
-              "Red",
-              0,
-              previousResults?.bigEyeBoy_numPosCol + 1,
-              previousResults?.bigEyeBoy_numPosRow,
-              latestResults?.results_id,
-            ]);
+            await databaseQuery(queryInsertBigEyeBoyData, redIncrementColumn);
           } else {
-            await databaseQuery(queryInsertBigEyeBoyData, [
-              "Red",
-              0,
-              previousResults?.bigEyeBoy_numPosCol,
-              previousResults?.bigEyeBoy_numPosRow + 1,
-              latestResults?.results_id,
-            ]);
+            await databaseQuery(queryInsertBigEyeBoyData, redIncrementRow);
           }
         }
       }
@@ -864,9 +1012,19 @@ exports.secondaryAddGameResults = async (req, res) => {
 
     const resultsData = await databaseQuery(queryGetAllBigEyeBoyResults);
 
-    console.log(resultsData);
+    const data = {
+      bigEyeBoyData: resultsData,
+      predictionsData: {
+        isRowColTwoOrThreeFound: isColRowTwoFound || isColRowThreeFound,
+        isBigEyeBoyHasData: isColRowTwoFound || isColRowThreeFound,
+        bigEyeBoy: {
+          banker: bigEyeBoyPrediction("Banker"),
+          player: bigEyeBoyPrediction("Player"),
+        },
+      },
+    };
 
-    return res.status(OK).send(resultsData);
+    return res.status(OK).send(data);
   } catch (error) {
     return res.status(internalServer).send({
       message: "Internal Server Error.",
