@@ -1,6 +1,12 @@
 import React, { useEffect, useState } from 'react'
 import BigRoad from './components/BigRoad'
-import { fetchAddDetailGameResults, fetchAddResults, fetchDeleteLatestGameResults, fetchGetResults, fetchResetGameResults } from './services/gameModifiedApi'
+import {
+  fetchAddDetailGameResults,
+  fetchAddResults,
+  fetchDeleteLatestGameResults,
+  fetchGetResults,
+  fetchResetGameResults
+} from './services/gameModifiedApi'
 
 import {
   generateBigEyeBoyData,
@@ -29,6 +35,7 @@ function App() {
     cockroachPig: generateCockroachPigData(30)
   })
 
+  const [count, setCount] = useState(0);
 
 
   const [resultsBoardData, setResultsBoardData] = useState([])
@@ -71,8 +78,8 @@ function App() {
           setResultsBoardMarkerData(response.markerRoadData)
         } else if (keySequence == 4) {
           const response = await fetchDeleteLatestGameResults();
-          const responseFromBigEyeBoyData = await fetchAddDetailGameResults();
-          setPredictionsData(responseFromBigEyeBoyData?.predictionsData)
+          // const responseFromBigEyeBoyData = await fetchAddDetailGameResults();
+          setPredictionsData(response?.predictionsData);
           setResultBigEyeBoyData(response.bigEyeBoyData)
           setResultsBoardData(response.bigRoadData);
           setResultsBoardMarkerData(response.markerRoadData)
@@ -101,12 +108,112 @@ function App() {
 
 
   useEffect(() => {
-
     document.body.addEventListener("keydown", handleEnterKeyCode)
     return () => {
       document.body.removeEventListener("keydown", handleEnterKeyCode)
     }
-  }, [boardData])
+  }, [boardData]);
+
+
+
+
+  // useEffect(() => {
+  //   const createInterval = setInterval(async () => {
+  //     setCount(Number(Math.random() * 6).toFixed(0))
+  //   }, 200);
+
+  //   return () => {
+  //     clearInterval(createInterval)
+  //   }
+  // }, []);
+
+  // console.log(count)
+
+
+
+  // const randomAddResults = async () => {
+  //   try {
+  //     if (count >= 0 && count <= 1) {
+  //       const response = await fetchAddResults({
+  //         result_name: "Banker",
+  //       })
+
+  //       const isCol40Found = response?.bigRoadData.find(r => r.num_posCol == 40) ? true : false
+  //       if (isCol40Found) {
+  //         const response = await fetchResetGameResults();
+  //         if (response) {
+  //           window.location.reload()
+  //           return
+  //         }
+  //       }
+
+  //       const responseFromBigEyeBoyData = await fetchAddDetailGameResults();
+
+  //       setPredictionsData(responseFromBigEyeBoyData?.predictionsData)
+  //       setResultBigEyeBoyData(responseFromBigEyeBoyData.bigEyeBoyData)
+  //       setResultsBoardData(response.bigRoadData);
+  //       setResultsBoardMarkerData(response.markerRoadData)
+
+  //     } else if (count >= 2 && count <= 3) {
+  //       const response = await fetchAddResults({
+  //         result_name: "Tie",
+  //       })
+
+  //       const isCol40Found = response?.bigRoadData.find(r => r.num_posCol == 40) ? true : false
+  //       if (isCol40Found) {
+  //         const response = await fetchResetGameResults();
+  //         if (response) {
+  //           window.location.reload()
+  //           return
+  //         }
+  //       }
+  //       const responseFromBigEyeBoyData = await fetchAddDetailGameResults();
+  //       setPredictionsData(responseFromBigEyeBoyData?.predictionsData)
+  //       setResultBigEyeBoyData(responseFromBigEyeBoyData.bigEyeBoyData)
+  //       setResultsBoardData(response.bigRoadData);
+  //       setResultsBoardMarkerData(response.markerRoadData)
+  //     } else if (count >= 4 && count <= 5) {
+  //       const response = await fetchAddResults({
+  //         result_name: "Player",
+  //       })
+
+  //       const isCol40Found = response?.bigRoadData.find(r => r.num_posCol == 40) ? true : false
+  //       if (isCol40Found) {
+  //         const response = await fetchResetGameResults();
+  //         if (response) {
+  //           window.location.reload()
+  //           return
+  //         }
+  //       }
+  //       const responseFromBigEyeBoyData = await fetchAddDetailGameResults();
+  //       setPredictionsData(responseFromBigEyeBoyData?.predictionsData)
+  //       setResultBigEyeBoyData(responseFromBigEyeBoyData.bigEyeBoyData)
+  //       setResultsBoardData(response.bigRoadData);
+  //       setResultsBoardMarkerData(response.markerRoadData)
+  //     }
+
+  //     // else if (count == 0) {
+  //     //   const response = await fetchAddResults({
+  //     //     result_name: "Tie",
+  //     //   })
+  //     //   const responseFromBigEyeBoyData = await fetchAddDetailGameResults();
+  //     //   setPredictionsData(responseFromBigEyeBoyData?.predictionsData)
+  //     //   setResultBigEyeBoyData(responseFromBigEyeBoyData.bigEyeBoyData)
+  //     //   setResultsBoardData(response.bigRoadData);
+  //     //   setResultsBoardMarkerData(response.markerRoadData)
+  //     // }
+  //   } catch (error) {
+  //     console.log(error)
+  //   }
+  // }
+
+  // useEffect(() => {
+  //   randomAddResults()
+  // }, [count])
+
+
+
+
 
 
   useEffect(() => {

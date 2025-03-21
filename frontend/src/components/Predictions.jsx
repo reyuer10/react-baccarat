@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react'
 
 function Predictions({ predictionsData }) {
     const { isRowColTwoOrThreeFound, isBigEyeBoyHasData, isSmallRoadHasData, bigEyeBoy } = predictionsData;
-    console.log(predictionsData)
 
     const [predictions, setPredictions] = useState([
         {
