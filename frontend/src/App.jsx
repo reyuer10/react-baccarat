@@ -120,7 +120,7 @@ function App() {
   // useEffect(() => {
   //   const createInterval = setInterval(async () => {
   //     setCount(Number(Math.random() * 6).toFixed(0))
-  //   }, 200);
+  //   }, 500);
 
   //   return () => {
   //     clearInterval(createInterval)

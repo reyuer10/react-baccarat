@@ -356,6 +356,9 @@ exports.addGameResults = async (req, res) => {
   const queryFindResultsUsingRowToLatest =
     "SELECT results_id, num_posCol, num_posRow FROM tb_results WHERE result_name != 'Tie' order by results_id desc";
 
+  const queryFindResultsNameUsingRowToLatest =
+    "SELECT results_id, result_name, num_posCol, num_posRow FROM tb_results WHERE result_name != 'Tie' order by results_id desc";
+
   const queryFindResultUsingRowDuplicate =
     "SELECT results_id, result_name, num_posRow FROM tb_results WHERE result_name != 'Tie' order by results_id desc LIMIT 2";
 
@@ -431,6 +434,10 @@ exports.addGameResults = async (req, res) => {
       queryFindResultsUsingRowToLatest
     );
 
+    const queryResultsNameUsingRowToLatest = await databaseQuery(
+      queryFindResultsNameUsingRowToLatest
+    );
+
     function isNumColAndRowTaken() {
       const futureIncrementCol = currentResults?.num_posCol;
       const futureIncrementRow = currentResults?.num_posRow + 1;
@@ -440,6 +447,20 @@ exports.addGameResults = async (req, res) => {
           res.num_posCol == futureIncrementCol &&
           res.num_posRow == futureIncrementRow
       );
+      return findTakenColRow;
+    }
+
+    function isAdvanceNumColAndRowTaken() {
+      const futureIncrementCol = currentResults?.num_posCol;
+      const futureIncrementRow = currentResults?.num_posRow + 1;
+
+      const findTakenColRow = queryResultsNameUsingRowToLatest.some(
+        (res) =>
+          res.num_posCol + 1 == futureIncrementCol &&
+          res.num_posRow == futureIncrementRow &&
+          res.result_name == result_name
+      );
+
       return findTakenColRow;
     }
 
@@ -475,7 +496,17 @@ exports.addGameResults = async (req, res) => {
             latestResultCount?.result_count,
           ]);
         } else {
-          if (isNumColAndRowTaken() || isCurrentResultRowsDuplicate) {
+          if (isAdvanceNumColAndRowTaken()) {
+            await databaseQuery(queryAddResults, [
+              result_name,
+              0,
+              0,
+              0,
+              currentResults?.num_posCol + 1,
+              currentResults?.num_posRow,
+              latestResultCount?.result_count,
+            ]);
+          } else if (isNumColAndRowTaken() || isCurrentResultRowsDuplicate) {
             const colIncrement = currentResults?.num_posCol + 1;
             await databaseQuery(queryAddResults, [
               result_name,
@@ -538,20 +569,43 @@ exports.addGameResults = async (req, res) => {
 
         const secResultsCol = secondaryResult.num_posCol;
         const secResultsRow = secondaryResult.num_posRow;
+        const secResultName = secondaryResult.result_name;
         // is secondary results is exist?
         if (!isSecondResultNotFound) {
           if (secResultsRow >= 6) {
-            await databaseQuery(queryAddResults, [
-              result_name,
-              0,
-              0,
-              1,
-              secResultsCol + 1,
-              currentResults?.num_posRow,
-              latestResultCount?.result_count,
-            ]);
+            if (secResultName == "Player") {
+              await databaseQuery(queryAddResults, [
+                result_name,
+                latestResultCount?.result_count + 1,
+                0,
+                1,
+                secResultsCol + 1,
+                1,
+                latestResultCount?.result_count + 1,
+              ]);
+            } else {
+              await databaseQuery(queryAddResults, [
+                result_name,
+                0,
+                0,
+                1,
+                secResultsCol + 1,
+                currentResults?.num_posRow,
+                latestResultCount?.result_count,
+              ]);
+            }
           } else {
-            if (isNumColAndRowTaken() || isCurrentResultRowsDuplicate) {
+            if (isAdvanceNumColAndRowTaken()) {
+              await databaseQuery(queryAddResults, [
+                result_name,
+                0,
+                0,
+                0,
+                currentResults?.num_posCol + 1,
+                currentResults?.num_posRow,
+                latestResultCount?.result_count,
+              ]);
+            } else if (isNumColAndRowTaken() || isCurrentResultRowsDuplicate) {
               await databaseQuery(queryAddResults, [
                 result_name,
                 0,
@@ -565,7 +619,7 @@ exports.addGameResults = async (req, res) => {
               if (secondaryResult?.result_name == "Player") {
                 await databaseQuery(queryAddResults, [
                   result_name,
-                  0,
+                  latestResultCount?.result_count + 1,
                   0,
                   0,
                   secResultsCol + 1,
@@ -602,7 +656,17 @@ exports.addGameResults = async (req, res) => {
             latestResultCount?.result_count,
           ]);
         } else {
-          if (isNumColAndRowTaken() || isCurrentResultRowsDuplicate) {
+          if (isAdvanceNumColAndRowTaken()) {
+            await databaseQuery(queryAddResults, [
+              result_name,
+              0,
+              0,
+              0,
+              currentResults?.num_posCol + 1,
+              currentResults?.num_posRow,
+              latestResultCount?.result_count,
+            ]);
+          } else if (isNumColAndRowTaken() || isCurrentResultRowsDuplicate) {
             const colIncrement = currentResults?.num_posCol + 1;
             await databaseQuery(queryAddResults, [
               result_name,
@@ -663,21 +727,44 @@ exports.addGameResults = async (req, res) => {
 
         const secResultsCol = secondaryResult.num_posCol;
         const secResultsRow = secondaryResult.num_posRow;
+        const secResultName = secondaryResult.result_name;
 
         // is secondary results is exist?
         if (!isSecondResultNotFound) {
           if (secResultsRow >= 6) {
-            await databaseQuery(queryAddResults, [
-              result_name,
-              0,
-              0,
-              1,
-              secResultsCol + 1,
-              currentResults?.num_posRow,
-              latestResultCount?.result_count,
-            ]);
+            if (secResultName == "Banker") {
+              await databaseQuery(queryAddResults, [
+                result_name,
+                latestResultCount?.result_count + 1,
+                0,
+                1,
+                secResultsCol + 1,
+                1,
+                latestResultCount?.result_count + 1,
+              ]);
+            } else {
+              await databaseQuery(queryAddResults, [
+                result_name,
+                0,
+                0,
+                1,
+                secResultsCol + 1,
+                currentResults?.num_posRow,
+                latestResultCount?.result_count,
+              ]);
+            }
           } else {
-            if (isNumColAndRowTaken() || isCurrentResultRowsDuplicate) {
+            if (isAdvanceNumColAndRowTaken()) {
+              await databaseQuery(queryAddResults, [
+                result_name,
+                0,
+                0,
+                0,
+                currentResults?.num_posCol + 1,
+                currentResults?.num_posRow,
+                latestResultCount?.result_count,
+              ]);
+            } else if (isNumColAndRowTaken() || isCurrentResultRowsDuplicate) {
               await databaseQuery(queryAddResults, [
                 result_name,
                 0,
@@ -691,7 +778,7 @@ exports.addGameResults = async (req, res) => {
               if (secondaryResult?.result_name == "Banker") {
                 await databaseQuery(queryAddResults, [
                   result_name,
-                  0,
+                  latestResultCount?.result_count + 1,
                   0,
                   0,
                   secResultsCol + 1,
@@ -808,7 +895,7 @@ exports.addGameResults = async (req, res) => {
 
 exports.secondaryAddGameResults = async (req, res) => {
   const queryFindLatestResultCount =
-    "SELECT results_id, bigEyeBoy_resultCount as `resultCount` FROM tb_results WHERE bigEyeBoy_resultCount != 0 order by results_id desc LIMIT 1";
+    "SELECT results_id, bigEyeBoy_resultCount as `resultCount` FROM tb_results WHERE bigEyeBoy_resultCount != 0 AND result_name != 'Tie' order by results_id desc LIMIT 1";
 
   const queryFindColRowResults =
     "SELECT results_id, num_posCol, num_posRow FROM tb_results WHERE num_posCol = ? AND num_posRow = ?";
@@ -837,7 +924,14 @@ exports.secondaryAddGameResults = async (req, res) => {
   const queryInsertBigEyeBoyData =
     "UPDATE tb_results SET bigEyeBoy_resultName = ?, bigEyeBoy_resultCount = ?, bigEyeBoy_numPosCol = ?, bigEyeBoy_numPosRow = ? WHERE results_id = ? AND result_name != 'Tie'";
 
+  const queryFindResultsUsingRowToLatest =
+    "SELECT results_id, bigEyeBoy_resultName, bigEyeBoy_numPosCol, bigEyeBoy_numPosRow FROM tb_results WHERE result_name != 'Tie' AND bigEyeBoy_numPosCol != '' AND bigEyeBoy_numPosRow != ''  order by results_id desc";
+
   try {
+    const findBigEyeBoyResultsUsingRowColToLatest = await databaseQuery(
+      queryFindResultsUsingRowToLatest
+    );
+
     const findLatestResultCount = await databaseQuery(
       queryFindLatestResultCount
     );
@@ -895,6 +989,25 @@ exports.secondaryAddGameResults = async (req, res) => {
 
     const getLatestResults = await databaseQuery(queryGetLatestResults);
     const latestResults = getLatestResults[0];
+
+    function isRowColTaken() {
+      const futurePreviousRow = previousResults?.bigEyeBoy_numPosRow + 1;
+      const futurePrevioustCol = previousResults?.bigEyeBoy_numPosCol;
+
+      console.log(
+        "previous result name: ",
+        previousResults?.bigEyeBoy_resultName
+      );
+
+      const isRowColFound = findBigEyeBoyResultsUsingRowColToLatest.some(
+        (res) =>
+          res.bigEyeBoy_numPosRow == futurePreviousRow &&
+          res.bigEyeBoy_numPosCol == futurePrevioustCol
+      );
+      return isRowColFound;
+    }
+
+    console.log(isRowColTaken());
 
     const isColRowTwoHandleCurrentResults =
       latestResults?.num_posCol == 2 && latestResults?.num_posRow == 2;
@@ -962,11 +1075,6 @@ exports.secondaryAddGameResults = async (req, res) => {
       const getCurrResults = await databaseQuery(queryGetLatestResults);
       const currResults = getCurrResults[0];
 
-      console.log(
-        currResults?.bigEyeBoy_resultName ==
-          bigEyeBoyPrediction(currResults?.result_name)
-      );
-
       return res.status(OK).send({
         bigEyeBoyData: resultsData,
         predictionsData: {
@@ -1005,10 +1113,6 @@ exports.secondaryAddGameResults = async (req, res) => {
       const getCurrResults = await databaseQuery(queryGetLatestResults);
       const currResults = getCurrResults[0];
 
-      console.log(
-        currResults?.bigEyeBoy_resultName ==
-          bigEyeBoyPrediction(currResults?.result_name)
-      );
       return res.status(OK).send({
         bigEyeBoyData: resultsData,
         predictionsData: {
@@ -1055,6 +1159,14 @@ exports.secondaryAddGameResults = async (req, res) => {
       latestResults?.results_id,
     ];
 
+    const blueIncrementColumn = [
+      "Blue",
+      0,
+      previousResults?.bigEyeBoy_numPosCol + 1,
+      previousResults?.bigEyeBoy_numPosRow,
+      latestResults?.results_id,
+    ];
+
     const redIncrementRow = [
       "Red",
       0,
@@ -1071,23 +1183,26 @@ exports.secondaryAddGameResults = async (req, res) => {
       latestResults?.results_id,
     ];
 
+    const isFirstColumnLessThanSecondColumn =
+      firstColumnLength < secondColumnLength;
+
+    const isFirstColumnGreaterThanSecondColumn =
+      firstColumnLength > secondColumnLength;
+
+    const isFirstColumnEqualToSecondColumn =
+      firstColumnLength == secondColumnLength;
+
+    const isSecondColumnEqualToThirdColumn =
+      secondColumnLength == thirdColumnLength;
+
+    const isFirstSecondThirdColumnEqual =
+      isFirstColumnEqualToSecondColumn && isSecondColumnEqualToThirdColumn;
+
     if (
       (isColRowTwoFound || isColRowThreeFound) &&
       isPrevNameResultNotMatchToCurrent &&
       defaultLatestResults?.result_name !== "Tie"
     ) {
-      const isFirstColumnLessThanSecondColumn =
-        firstColumnLength < secondColumnLength;
-
-      const isFirstColumnEqualToSecondColumn =
-        firstColumnLength == secondColumnLength;
-
-      const isSecondColumnEqualToThirdColumn =
-        secondColumnLength == thirdColumnLength;
-
-      const isFirstSecondThirdColumnEqual =
-        isFirstColumnEqualToSecondColumn && isSecondColumnEqualToThirdColumn;
-
       if (isFirstColumnLessThanSecondColumn) {
         if (isSecondColumnEqualToThirdColumn) {
           if (previousResults?.bigEyeBoy_numPosRow > 5) {
@@ -1096,7 +1211,11 @@ exports.secondaryAddGameResults = async (req, res) => {
             await databaseQuery(queryInsertBigEyeBoyData, redIncrementRow);
           }
         } else if (previousResults?.bigEyeBoy_resultName == "Blue") {
-          await databaseQuery(queryInsertBigEyeBoyData, blueIncrementRow);
+          if (previousResults?.bigEyeBoy_numPosRow > 5) {
+            await databaseQuery(queryInsertBigEyeBoyData, blueIncrementColumn);
+          } else {
+            await databaseQuery(queryInsertBigEyeBoyData, blueIncrementRow);
+          }
         } else {
           await databaseQuery(queryInsertBigEyeBoyData, blueResetColumn);
         }
@@ -1127,13 +1246,18 @@ exports.secondaryAddGameResults = async (req, res) => {
         isLatestResultsReachColRowTwo &&
         isResultNameNotTie
       ) {
-        if (firstColumnLength <= secondColumnLength) {
+        if (
+          isFirstColumnLessThanSecondColumn ||
+          isFirstColumnEqualToSecondColumn
+        ) {
           if (previousResults?.bigEyeBoy_resultName == "Blue") {
             await databaseQuery(queryInsertBigEyeBoyData, redResetColumn);
-          } else if (previousResults?.bigEyeBoy_numPosRow > 5) {
-            await databaseQuery(queryInsertBigEyeBoyData, redIncrementColumn);
           } else {
-            await databaseQuery(queryInsertBigEyeBoyData, redIncrementRow);
+            if (previousResults?.bigEyeBoy_numPosRow > 5) {
+              await databaseQuery(queryInsertBigEyeBoyData, redIncrementColumn);
+            } else {
+              await databaseQuery(queryInsertBigEyeBoyData, redIncrementRow);
+            }
           }
         } else if (secondColumnLength == firstColumnLength - 1) {
           if (previousResults?.bigEyeBoy_resultName == "Blue") {
@@ -1141,7 +1265,7 @@ exports.secondaryAddGameResults = async (req, res) => {
           } else {
             await databaseQuery(queryInsertBigEyeBoyData, blueResetColumn);
           }
-        } else if (firstColumnLength > secondColumnLength) {
+        } else if (isFirstColumnGreaterThanSecondColumn) {
           if (previousResults?.bigEyeBoy_resultName == "Blue") {
             await databaseQuery(queryInsertBigEyeBoyData, redResetColumn);
           } else if (previousResults?.bigEyeBoy_numPosRow > 5) {
@@ -1154,11 +1278,6 @@ exports.secondaryAddGameResults = async (req, res) => {
     }
 
     const resultsData = await databaseQuery(queryGetAllBigEyeBoyResults);
-
-    const getCurrResults = await databaseQuery(queryGetLatestResults);
-    const currResults = getCurrResults[0];
-    const alternateResults =
-      currResults?.result_name == "Player" ? "Banker" : "Player";
 
     const data = {
       bigEyeBoyData: resultsData,
