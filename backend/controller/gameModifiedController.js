@@ -533,14 +533,18 @@ exports.addGameResults = async (req, res) => {
       }
 
       if (isPrevLocalResultsPlayer) {
+        const isLatestResultCountHasValue = !latestResultCount
+          ? 1
+          : latestResultCount?.result_count + 1;
+
         await databaseQuery(queryAddResults, [
           result_name,
-          latestResultCount?.result_count + 1,
+          isLatestResultCountHasValue,
           0,
           1,
           resultsUsingColumn?.num_posCol + 1,
           1,
-          latestResultCount?.result_count + 1,
+          isLatestResultCountHasValue,
         ]);
       } else if (isPrevResultTie) {
         const isPreviousResultNotFound = !previousMainResult;
@@ -692,14 +696,18 @@ exports.addGameResults = async (req, res) => {
         }
       }
       if (isPrevLocalResultsBanker) {
+        const isLatestResultCountHasValue = !latestResultCount
+          ? 1
+          : latestResultCount?.result_count + 1;
+
         await databaseQuery(queryAddResults, [
           result_name,
-          latestResultCount?.result_count + 1,
+          isLatestResultCountHasValue,
           0,
           1,
           resultsUsingColumn?.num_posCol + 1,
           1,
-          latestResultCount?.result_count + 1,
+          isLatestResultCountHasValue,
         ]);
       } else if (isPrevResultTie) {
         const isPreviousResultNotFound = !previousMainResult;
@@ -927,6 +935,12 @@ exports.secondaryAddGameResults = async (req, res) => {
   const queryFindResultsUsingRowToLatest =
     "SELECT results_id, bigEyeBoy_resultName, bigEyeBoy_numPosCol, bigEyeBoy_numPosRow FROM tb_results WHERE result_name != 'Tie' AND bigEyeBoy_numPosCol != '' AND bigEyeBoy_numPosRow != ''  order by results_id desc";
 
+  const queryGetLatestBigEyeBoyResultCount =
+    "SELECT results_id, bigEyeBoy_resultCount FROM tb_results WHERE bigEyeBoy_resultCount != 0 ORDER BY results_id desc LIMIT 1";
+
+  const queryGetLatestItemOnBigEyeBoy =
+    "SELECT results_id, bigEyeBoy_numPosRow FROM tb_results WHERE results_id BETWEEN ? AND ?";
+
   try {
     const findBigEyeBoyResultsUsingRowColToLatest = await databaseQuery(
       queryFindResultsUsingRowToLatest
@@ -982,6 +996,14 @@ exports.secondaryAddGameResults = async (req, res) => {
       [thirdLatestColResults?.num_posCol]
     );
 
+    const getLatestBigEyeBoyResultCount = await databaseQuery(
+      queryGetLatestBigEyeBoyResultCount
+    );
+
+    const latestBigEyeBoyResultCount = getLatestBigEyeBoyResultCount[0];
+    const resultsIdFromBigEyeBoyResultsCount =
+      latestBigEyeBoyResultCount?.results_id;
+
     const getDefaultLatestResults = await databaseQuery(
       queryGetDefaultLatestResults
     );
@@ -990,24 +1012,45 @@ exports.secondaryAddGameResults = async (req, res) => {
     const getLatestResults = await databaseQuery(queryGetLatestResults);
     const latestResults = getLatestResults[0];
 
-    function isRowColTaken() {
-      const futurePreviousRow = previousResults?.bigEyeBoy_numPosRow + 1;
-      const futurePrevioustCol = previousResults?.bigEyeBoy_numPosCol;
+    const getLatestItemOnBigEyeBoy = await databaseQuery(
+      queryGetLatestItemOnBigEyeBoy,
+      [resultsIdFromBigEyeBoyResultsCount, latestResults?.results_id]
+    );
 
-      console.log(
-        "previous result name: ",
-        previousResults?.bigEyeBoy_resultName
-      );
+    const findDuplicateItemOnBigEyeBoy = getLatestItemOnBigEyeBoy.filter(
+      (item, index) =>
+        item.bigEyeBoy_numPosRow ==
+          getLatestItemOnBigEyeBoy[index + 1]?.bigEyeBoy_numPosRow &&
+        item.bigEyeBoy_numPosRow != null
+    );
+
+    const hasDuplicateItemOnBigEyeBoy = findDuplicateItemOnBigEyeBoy.length > 0;
+
+    function isRowColTaken(resultName) {
+      const futurePreviousRow = previousResults?.bigEyeBoy_numPosRow + 1;
+      const defaultPrevioustCol = previousResults?.bigEyeBoy_numPosCol;
+      const defaultPreviousRow = previousResults?.bigEyeBoy_numPosRow;
 
       const isRowColFound = findBigEyeBoyResultsUsingRowColToLatest.some(
         (res) =>
-          res.bigEyeBoy_numPosRow == futurePreviousRow &&
-          res.bigEyeBoy_numPosCol == futurePrevioustCol
+          (res.bigEyeBoy_numPosRow == futurePreviousRow &&
+            res.bigEyeBoy_numPosCol == defaultPrevioustCol) ||
+          (res.bigEyeBoy_numPosRow == futurePreviousRow &&
+            res.bigEyeBoy_numPosCol == defaultPrevioustCol &&
+            res.bigEyeBoy_resultName == resultName)
       );
-      return isRowColFound;
-    }
 
-    console.log(isRowColTaken());
+      const isColFound = findBigEyeBoyResultsUsingRowColToLatest.some(
+        (res) =>
+          res.bigEyeBoy_numPosCol + 1 == defaultPrevioustCol &&
+          res.bigEyeBoy_numPosRow == defaultPreviousRow + 1 &&
+          res.bigEyeBoy_numPosCol + 1 == defaultPrevioustCol &&
+          res.bigEyeBoy_numPosRow == defaultPreviousRow + 1 &&
+          res.bigEyeBoy_resultName == resultName
+      );
+
+      return isRowColFound || isColFound;
+    }
 
     const isColRowTwoHandleCurrentResults =
       latestResults?.num_posCol == 2 && latestResults?.num_posRow == 2;
@@ -1198,17 +1241,32 @@ exports.secondaryAddGameResults = async (req, res) => {
     const isFirstSecondThirdColumnEqual =
       isFirstColumnEqualToSecondColumn && isSecondColumnEqualToThirdColumn;
 
-    if (
-      (isColRowTwoFound || isColRowThreeFound) &&
-      isPrevNameResultNotMatchToCurrent &&
-      defaultLatestResults?.result_name !== "Tie"
-    ) {
+    const isColTwoOrThreeFound = isColRowTwoFound || isColRowThreeFound;
+    const isLatestResultsNotTie = defaultLatestResults?.result_name !== "Tie";
+    const isCurrResultsNotMatch =
+      isColTwoOrThreeFound &&
+      isLatestResultsNotTie &&
+      isPrevNameResultNotMatchToCurrent;
+
+    if (isCurrResultsNotMatch) {
       if (isFirstColumnLessThanSecondColumn) {
         if (isSecondColumnEqualToThirdColumn) {
+          // await databaseQuery(queryInsertBigEyeBoyData, redIncrementColumn);
           if (previousResults?.bigEyeBoy_numPosRow > 5) {
             await databaseQuery(queryInsertBigEyeBoyData, redIncrementColumn);
           } else {
-            await databaseQuery(queryInsertBigEyeBoyData, redIncrementRow);
+            if (isRowColTaken("Red")) {
+              await databaseQuery(queryInsertBigEyeBoyData, redIncrementColumn);
+            } else {
+              if (hasDuplicateItemOnBigEyeBoy) {
+                await databaseQuery(
+                  queryInsertBigEyeBoyData,
+                  redIncrementColumn
+                );
+              } else {
+                await databaseQuery(queryInsertBigEyeBoyData, redIncrementRow);
+              }
+            }
           }
         } else if (previousResults?.bigEyeBoy_resultName == "Blue") {
           if (previousResults?.bigEyeBoy_numPosRow > 5) {
@@ -1225,7 +1283,27 @@ exports.secondaryAddGameResults = async (req, res) => {
             if (previousResults?.bigEyeBoy_numPosRow > 5) {
               await databaseQuery(queryInsertBigEyeBoyData, redIncrementColumn);
             } else {
-              await databaseQuery(queryInsertBigEyeBoyData, redIncrementRow);
+              if (
+                isRowColTaken("Red") ||
+                previousResults?.bigEyeBoy_numPosRow > 5
+              ) {
+                await databaseQuery(
+                  queryInsertBigEyeBoyData,
+                  redIncrementColumn
+                );
+              } else {
+                if (hasDuplicateItemOnBigEyeBoy) {
+                  await databaseQuery(
+                    queryInsertBigEyeBoyData,
+                    redIncrementColumn
+                  );
+                } else {
+                  await databaseQuery(
+                    queryInsertBigEyeBoyData,
+                    redIncrementRow
+                  );
+                }
+              }
             }
           } else {
             await databaseQuery(queryInsertBigEyeBoyData, redResetColumn);
@@ -1234,18 +1312,26 @@ exports.secondaryAddGameResults = async (req, res) => {
           if (previousResults?.bigEyeBoy_resultName == "Red") {
             await databaseQuery(queryInsertBigEyeBoyData, blueResetColumn);
           } else {
-            await databaseQuery(queryInsertBigEyeBoyData, blueIncrementRow);
+            if (previousResults?.bigEyeBoy_numPosRow > 5) {
+              await databaseQuery(
+                queryInsertBigEyeBoyData,
+                blueIncrementColumn
+              );
+            } else {
+              await databaseQuery(queryInsertBigEyeBoyData, blueIncrementRow);
+            }
           }
         }
       }
     } else {
       const isColRowTwoOrThreeFound = isColRowTwoFound || isColRowThreeFound;
       const isResultNameNotTie = defaultLatestResults?.result_name !== "Tie";
-      if (
+      const isCurrResultsMatch =
         isColRowTwoOrThreeFound &&
         isLatestResultsReachColRowTwo &&
-        isResultNameNotTie
-      ) {
+        isResultNameNotTie;
+
+      if (isCurrResultsMatch) {
         if (
           isFirstColumnLessThanSecondColumn ||
           isFirstColumnEqualToSecondColumn
@@ -1256,22 +1342,56 @@ exports.secondaryAddGameResults = async (req, res) => {
             if (previousResults?.bigEyeBoy_numPosRow > 5) {
               await databaseQuery(queryInsertBigEyeBoyData, redIncrementColumn);
             } else {
-              await databaseQuery(queryInsertBigEyeBoyData, redIncrementRow);
+              if (
+                isRowColTaken("Red") ||
+                previousResults?.bigEyeBoy_numPosRow > 5
+              ) {
+                await databaseQuery(
+                  queryInsertBigEyeBoyData,
+                  redIncrementColumn
+                );
+              } else {
+                if (hasDuplicateItemOnBigEyeBoy) {
+                  await databaseQuery(
+                    queryInsertBigEyeBoyData,
+                    redIncrementColumn
+                  );
+                } else {
+                  await databaseQuery(
+                    queryInsertBigEyeBoyData,
+                    redIncrementRow
+                  );
+                }
+              }
             }
           }
         } else if (secondColumnLength == firstColumnLength - 1) {
           if (previousResults?.bigEyeBoy_resultName == "Blue") {
-            await databaseQuery(queryInsertBigEyeBoyData, blueIncrementRow);
+            if (previousResults?.bigEyeBoy_numPosRow > 5) {
+              await databaseQuery(
+                queryInsertBigEyeBoyData,
+                blueIncrementColumn
+              );
+            } else {
+              await databaseQuery(queryInsertBigEyeBoyData, blueIncrementRow);
+            }
           } else {
             await databaseQuery(queryInsertBigEyeBoyData, blueResetColumn);
           }
         } else if (isFirstColumnGreaterThanSecondColumn) {
           if (previousResults?.bigEyeBoy_resultName == "Blue") {
             await databaseQuery(queryInsertBigEyeBoyData, redResetColumn);
-          } else if (previousResults?.bigEyeBoy_numPosRow > 5) {
+          } else if (
+            isRowColTaken("Red") ||
+            previousResults?.bigEyeBoy_numPosRow > 5
+          ) {
             await databaseQuery(queryInsertBigEyeBoyData, redIncrementColumn);
           } else {
-            await databaseQuery(queryInsertBigEyeBoyData, redIncrementRow);
+            if (hasDuplicateItemOnBigEyeBoy) {
+              await databaseQuery(queryInsertBigEyeBoyData, redIncrementColumn);
+            } else {
+              await databaseQuery(queryInsertBigEyeBoyData, redIncrementRow);
+            }
           }
         }
       }

@@ -10,9 +10,6 @@ router.delete(
   "/DELETE/undo/results/game",
   gameModifiedController.undoGameResults
 );
-router.get(
-  "/GET/detail/game",
-  gameModifiedController.secondaryAddGameResults
-);
+router.get("/GET/detail/game", gameModifiedController.secondaryAddGameResults);
 
 module.exports = router;
