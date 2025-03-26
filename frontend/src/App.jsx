@@ -41,6 +41,7 @@ function App() {
   const [resultsBoardData, setResultsBoardData] = useState([])
   const [resultBoardMarkerData, setResultsBoardMarkerData] = useState([])
   const [resultBigEyeBoyData, setResultBigEyeBoyData] = useState([])
+  const [resultSmallRoadData, setResultSmallRoadData] = useState([])
   const [predictionsData, setPredictionsData] = useState([])
 
   const [round, setRound] = useState(0)
@@ -56,8 +57,10 @@ function App() {
           const responseFromBigEyeBoyData = await fetchAddDetailGameResults();
           setPredictionsData(responseFromBigEyeBoyData?.predictionsData)
           setResultBigEyeBoyData(responseFromBigEyeBoyData.bigEyeBoyData)
+          setResultSmallRoadData(responseFromBigEyeBoyData.smallRoadData)
           setResultsBoardData(response.bigRoadData);
           setResultsBoardMarkerData(response.markerRoadData);
+
         } else if (keySequence == 2) {
           const response = await fetchAddResults({
             result_name: "Banker",
@@ -65,8 +68,10 @@ function App() {
           const responseFromBigEyeBoyData = await fetchAddDetailGameResults();
           setPredictionsData(responseFromBigEyeBoyData?.predictionsData)
           setResultBigEyeBoyData(responseFromBigEyeBoyData.bigEyeBoyData)
+          setResultSmallRoadData(responseFromBigEyeBoyData.smallRoadData)
           setResultsBoardData(response.bigRoadData);
           setResultsBoardMarkerData(response.markerRoadData)
+
         } else if (keySequence == 3) {
           const response = await fetchAddResults({
             result_name: "Tie",
@@ -74,8 +79,10 @@ function App() {
           const responseFromBigEyeBoyData = await fetchAddDetailGameResults();
           setPredictionsData(responseFromBigEyeBoyData?.predictionsData)
           setResultBigEyeBoyData(responseFromBigEyeBoyData.bigEyeBoyData)
+          setResultSmallRoadData(responseFromBigEyeBoyData.smallRoadData)
           setResultsBoardData(response.bigRoadData);
           setResultsBoardMarkerData(response.markerRoadData)
+
         } else if (keySequence == 4) {
           const response = await fetchDeleteLatestGameResults();
           // const responseFromBigEyeBoyData = await fetchAddDetailGameResults();
@@ -224,6 +231,7 @@ function App() {
         setResultsBoardData(response.bigRoadData);
         setResultsBoardMarkerData(response.markerRoadData);
         setPredictionsData(response.predictionsData)
+        setResultSmallRoadData(response.smallRoadData)
       } catch (error) {
         console.log(error);
       }
@@ -278,7 +286,7 @@ function App() {
         <div className='flex z-20 w-full'>
           {boardData.smallRoad.map((sr, index) => {
             return (
-              <SmallRoad sr={sr} key={index} />
+              <SmallRoad sr={sr} key={index} smallRoadData={resultSmallRoadData} />
             )
           })}
         </div>

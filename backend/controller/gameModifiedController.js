@@ -41,6 +41,9 @@ exports.getGameResults = async (req, res) => {
   const queryGetLatestResults =
     "SELECT * FROM tb_results WHERE result_name != 'Tie' order by results_id desc LIMIT 1";
 
+  const queryGetLatestSmallRoadResults =
+    "SELECT sr_name, sr_col, sr_row FROM tb_results WHERE result_name != 'Tie' AND sr_name != '' AND sr_col != '' AND sr_row != ''  order by results_id desc";
+
   try {
     const getThreeLatestResults = await databaseQuery(
       queryGetThreeLatestColResults
@@ -76,6 +79,10 @@ exports.getGameResults = async (req, res) => {
 
     const getLatestResults = await databaseQuery(queryGetLatestResults);
     const latestResults = getLatestResults[0];
+
+    const getLatestSmallRoadResults = await databaseQuery(
+      queryGetLatestSmallRoadResults
+    );
 
     const isCurrentResultsBlue = latestResults?.result_name == "Player";
     const isCurrentResultsRed = latestResults?.result_name == "Banker";
@@ -129,6 +136,7 @@ exports.getGameResults = async (req, res) => {
       bigRoadData: getBoardDataExceptTie,
       markerRoadData: getBoardData,
       bigEyeBoyData: resultsData,
+      smallRoadData: getLatestSmallRoadResults,
       predictionsData: {
         isRowColTwoOrThreeFound:
           isColRowTwoFound || isColRowThreeFound
@@ -374,11 +382,6 @@ exports.addGameResults = async (req, res) => {
   const queryUpdateTieCountResults =
     "UPDATE tb_results SET tie_count = ? WHERE main_resultCol = 2 order by results_id desc LIMIT 1";
 
-  // BIG EYE BOY:
-
-  const queryGetLatestResults =
-    "SELECT * FROM tb_results order by results_id desc LIMIT 1";
-
   const {
     body: { result_name },
   } = req;
@@ -453,7 +456,6 @@ exports.addGameResults = async (req, res) => {
     function isAdvanceNumColAndRowTaken() {
       const futureIncrementCol = currentResults?.num_posCol;
       const futureIncrementRow = currentResults?.num_posRow + 1;
-
       const findTakenColRow = queryResultsNameUsingRowToLatest.some(
         (res) =>
           res.num_posCol + 1 == futureIncrementCol &&
@@ -570,7 +572,7 @@ exports.addGameResults = async (req, res) => {
             markerRoadData: resultsQueryGetResults,
           });
         }
-
+        const secRoleResultsCol = secondaryResult.group_count;
         const secResultsCol = secondaryResult.num_posCol;
         const secResultsRow = secondaryResult.num_posRow;
         const secResultName = secondaryResult.result_name;
@@ -583,7 +585,7 @@ exports.addGameResults = async (req, res) => {
                 latestResultCount?.result_count + 1,
                 0,
                 1,
-                secResultsCol + 1,
+                secRoleResultsCol + 1,
                 1,
                 latestResultCount?.result_count + 1,
               ]);
@@ -593,13 +595,23 @@ exports.addGameResults = async (req, res) => {
                 0,
                 0,
                 1,
-                secResultsCol + 1,
+                secRoleResultsCol + 1,
                 currentResults?.num_posRow,
                 latestResultCount?.result_count,
               ]);
             }
           } else {
-            if (isAdvanceNumColAndRowTaken()) {
+            if (secondaryResult?.result_name == "Player") {
+              await databaseQuery(queryAddResults, [
+                result_name,
+                latestResultCount?.result_count + 1,
+                0,
+                0,
+                secRoleResultsCol + 1,
+                1,
+                latestResultCount?.result_count + 1,
+              ]);
+            } else if (isAdvanceNumColAndRowTaken()) {
               await databaseQuery(queryAddResults, [
                 result_name,
                 0,
@@ -620,27 +632,15 @@ exports.addGameResults = async (req, res) => {
                 latestResultCount?.result_count,
               ]);
             } else {
-              if (secondaryResult?.result_name == "Player") {
-                await databaseQuery(queryAddResults, [
-                  result_name,
-                  latestResultCount?.result_count + 1,
-                  0,
-                  0,
-                  secResultsCol + 1,
-                  1,
-                  latestResultCount?.result_count + 1,
-                ]);
-              } else {
-                await databaseQuery(queryAddResults, [
-                  result_name,
-                  0,
-                  0,
-                  0,
-                  secResultsCol,
-                  currentResults?.num_posRow + 1,
-                  latestResultCount?.result_count,
-                ]);
-              }
+              await databaseQuery(queryAddResults, [
+                result_name,
+                0,
+                0,
+                0,
+                secResultsCol,
+                currentResults?.num_posRow + 1,
+                latestResultCount?.result_count,
+              ]);
             }
           }
         }
@@ -734,12 +734,14 @@ exports.addGameResults = async (req, res) => {
           });
         }
 
+        const secRoleResultsCol = secondaryResult.group_count;
         const secResultsCol = secondaryResult.num_posCol;
         const secResultsRow = secondaryResult.num_posRow;
         const secResultName = secondaryResult.result_name;
+        const isSecondaryRoleFound = !isSecondResultNotFound;
 
         // is secondary results is exist?
-        if (!isSecondResultNotFound) {
+        if (isSecondaryRoleFound) {
           if (secResultsRow >= 6) {
             if (secResultName == "Banker") {
               await databaseQuery(queryAddResults, [
@@ -747,7 +749,7 @@ exports.addGameResults = async (req, res) => {
                 latestResultCount?.result_count + 1,
                 0,
                 1,
-                secResultsCol + 1,
+                secRoleResultsCol + 1,
                 1,
                 latestResultCount?.result_count + 1,
               ]);
@@ -757,13 +759,23 @@ exports.addGameResults = async (req, res) => {
                 0,
                 0,
                 1,
-                secResultsCol + 1,
+                secRoleResultsCol + 1,
                 currentResults?.num_posRow,
                 latestResultCount?.result_count,
               ]);
             }
           } else {
-            if (isAdvanceNumColAndRowTaken()) {
+            if (secondaryResult?.result_name == "Banker") {
+              await databaseQuery(queryAddResults, [
+                result_name,
+                latestResultCount?.result_count + 1,
+                0,
+                0,
+                secRoleResultsCol + 1,
+                1,
+                latestResultCount?.result_count + 1,
+              ]);
+            } else if (isAdvanceNumColAndRowTaken()) {
               await databaseQuery(queryAddResults, [
                 result_name,
                 0,
@@ -784,27 +796,15 @@ exports.addGameResults = async (req, res) => {
                 latestResultCount?.result_count,
               ]);
             } else {
-              if (secondaryResult?.result_name == "Banker") {
-                await databaseQuery(queryAddResults, [
-                  result_name,
-                  latestResultCount?.result_count + 1,
-                  0,
-                  0,
-                  secResultsCol + 1,
-                  1,
-                  latestResultCount?.result_count + 1,
-                ]);
-              } else {
-                await databaseQuery(queryAddResults, [
-                  result_name,
-                  0,
-                  0,
-                  0,
-                  secResultsCol,
-                  currentResults?.num_posRow + 1,
-                  latestResultCount?.result_count,
-                ]);
-              }
+              await databaseQuery(queryAddResults, [
+                result_name,
+                0,
+                0,
+                0,
+                secResultsCol,
+                currentResults?.num_posRow + 1,
+                latestResultCount?.result_count,
+              ]);
             }
           }
         }
@@ -887,8 +887,8 @@ exports.addGameResults = async (req, res) => {
     const resultsQueryGetResultsExceptTie = await databaseQuery(
       queryGetResultsExceptTie
     );
-    const getLatesResults = await databaseQuery(queryGetLatestResults);
-    const queryResults = getLatesResults[0];
+    // const getLatesResults = await databaseQuery(queryGetLatestResults);
+    // const queryResults = getLatesResults[0];
 
     return res.status(OK).send({
       bigRoadData: resultsQueryGetResultsExceptTie,
@@ -908,6 +908,9 @@ exports.secondaryAddGameResults = async (req, res) => {
 
   const queryFindColRowResults =
     "SELECT results_id, num_posCol, num_posRow FROM tb_results WHERE num_posCol = ? AND num_posRow = ?";
+
+  const queryFindColRowResultsFromSmallRoad =
+    "SELECT results_id, sr_col, sr_row FROM tb_results WHERE sr_col = ? AND sr_row = ?";
 
   const queryGetAllBigEyeBoyResults =
     "SELECT bigEyeBoy_resultName as `name`, bigEyeBoy_numPosCol as `column`, bigEyeBoy_numPosRow as `row` FROM tb_results WHERE result_name != 'Tie' AND bigEyeBoy_resultName != ''";
@@ -941,6 +944,15 @@ exports.secondaryAddGameResults = async (req, res) => {
 
   const queryGetLatestItemOnBigEyeBoy =
     "SELECT results_id, bigEyeBoy_numPosRow FROM tb_results WHERE results_id BETWEEN ? AND ?";
+
+  const queryUpdateSmallRoadResults =
+    "UPDATE tb_results SET sr_name = ?, sr_col = ?, sr_row = ? WHERE results_id = ?";
+
+  const queryGetLatestSmallRoadResults =
+    "SELECT sr_name, sr_col, sr_row FROM tb_results WHERE result_name != 'Tie' AND sr_name != '' AND sr_col != '' AND sr_row != '' order by results_id desc";
+
+  const queryGetLatestResultsFromSmallRoad =
+    "SELECT sr_name, sr_col, sr_row FROM tb_results WHERE result_name != 'Tie' AND sr_name != '' AND sr_col != '' AND sr_row != '' order by results_id desc LIMIT 1 OFFSET 1";
 
   try {
     const findBigEyeBoyResultsUsingRowColToLatest = await databaseQuery(
@@ -1026,8 +1038,6 @@ exports.secondaryAddGameResults = async (req, res) => {
     );
 
     const hasDuplicateItemOnBigEyeBoy = findDuplicateItemOnBigEyeBoy.length > 0;
-    // console.log("duplicate: ", getLatestItemOnBigEyeBoy)
-    console.log("latest id: ", resultsIdFromBigEyeBoyResultsCount);
 
     function isRowColTaken(resultName) {
       const futurePreviousRow = previousResults?.bigEyeBoy_numPosRow + 1;
@@ -1181,18 +1191,23 @@ exports.secondaryAddGameResults = async (req, res) => {
       (latestResults?.num_posCol >= 2 && latestResults?.num_posRow >= 2) ||
       (latestResults?.num_posCol >= 3 && latestResults?.num_posRow >= 1);
 
+    const isPrevResultNotEqualToOne =
+      previousResults?.bigEyeBoy_numPosRow != 1
+        ? latestResultCount?.resultCount + 1
+        : previousResults?.bigEyeBoy_numPosCol + 1;
+
     const redResetColumn = [
       "Red",
-      latestResultCount?.resultCount + 1,
-      latestResultCount?.resultCount + 1,
+      isPrevResultNotEqualToOne,
+      isPrevResultNotEqualToOne,
       1,
       latestResults?.results_id,
     ];
 
     const blueResetColumn = [
       "Blue",
-      latestResultCount?.resultCount + 1,
-      latestResultCount?.resultCount + 1,
+      isPrevResultNotEqualToOne,
+      isPrevResultNotEqualToOne,
       1,
       latestResults?.results_id,
     ];
@@ -1229,14 +1244,6 @@ exports.secondaryAddGameResults = async (req, res) => {
       latestResults?.results_id,
     ];
 
-    const redIncrementColumnAndResultCount = [
-      "Red",
-      previousResults?.bigEyeBoy_numPosCol + 1,
-      previousResults?.bigEyeBoy_numPosCol + 1,
-      previousResults?.bigEyeBoy_numPosRow,
-      latestResults?.results_id,
-    ];
-
     const isFirstColumnLessThanSecondColumn =
       firstColumnLength < secondColumnLength;
 
@@ -1259,15 +1266,12 @@ exports.secondaryAddGameResults = async (req, res) => {
       isLatestResultsNotTie &&
       isPrevNameResultNotMatchToCurrent;
 
-    console.log("Third column: ", thirdColumnLength);
-    console.log("Second column: ", secondColumnLength);
-    console.log("First column: ", firstColumnLength);
-
     if (isCurrResultsNotMatch) {
       if (isFirstColumnLessThanSecondColumn) {
         if (isSecondColumnEqualToThirdColumn) {
-          // await databaseQuery(queryInsertBigEyeBoyData, redIncrementColumn);
-          if (previousResults?.bigEyeBoy_numPosRow > 5) {
+          if (previousResults?.bigEyeBoy_resultName == "Blue") {
+            await databaseQuery(queryInsertBigEyeBoyData, redResetColumn);
+          } else if (previousResults?.bigEyeBoy_numPosRow > 5) {
             await databaseQuery(queryInsertBigEyeBoyData, redIncrementColumn);
           } else {
             if (isRowColTaken("Red")) {
@@ -1394,38 +1398,36 @@ exports.secondaryAddGameResults = async (req, res) => {
             await databaseQuery(queryInsertBigEyeBoyData, blueResetColumn);
           }
         } else if (isFirstColumnGreaterThanSecondColumn) {
-          console.log("is this console? (default)");
-
           if (previousResults?.bigEyeBoy_resultName == "Blue") {
             await databaseQuery(queryInsertBigEyeBoyData, redResetColumn);
           } else if (
             isRowColTaken("Red") ||
             previousResults?.bigEyeBoy_numPosRow > 5
           ) {
-            if (previousResults?.bigEyeBoy_numPosRow == 1) {
-              await databaseQuery(
-                queryInsertBigEyeBoyData,
-                redIncrementColumnAndResultCount
-              );
-            } else {
-              await databaseQuery(queryInsertBigEyeBoyData, redIncrementColumn);
-            }
-            console.log("is this console? (1)");
+            // if (previousResults?.bigEyeBoy_numPosRow == 1) {
+            //   await databaseQuery(
+            //     queryInsertBigEyeBoyData,
+            //     redIncrementColumnAndResultCount
+            //   );
+            // } else {
+            //   await databaseQuery(queryInsertBigEyeBoyData, redIncrementColumn);
+            // }
+            await databaseQuery(queryInsertBigEyeBoyData, redIncrementColumn);
           } else {
             if (hasDuplicateItemOnBigEyeBoy) {
-              if (previousResults?.bigEyeBoy_numPosRow == 1) {
-                await databaseQuery(
-                  queryInsertBigEyeBoyData,
-                  redIncrementColumnAndResultCount
-                );
-              } else {
-                await databaseQuery(
-                  queryInsertBigEyeBoyData,
-                  redIncrementColumn
-                );
-              }
+              // if (previousResults?.bigEyeBoy_numPosRow == 1) {
+              //   await databaseQuery(
+              //     queryInsertBigEyeBoyData,
+              //     redIncrementColumnAndResultCount
+              //   );
+              // } else {
+              //   await databaseQuery(
+              //     queryInsertBigEyeBoyData,
+              //     redIncrementColumn
+              //   );
+              // }
+              await databaseQuery(queryInsertBigEyeBoyData, redIncrementColumn);
             } else {
-              console.log("is this console? (3)", previousResults);
               await databaseQuery(queryInsertBigEyeBoyData, redIncrementRow);
             }
           }
@@ -1433,10 +1435,70 @@ exports.secondaryAddGameResults = async (req, res) => {
       }
     }
 
+    const findColThreeRowTwo = await databaseQuery(
+      queryFindColRowResultsFromSmallRoad,
+      [3, 2]
+    );
+
+    const findColFourRowOne = await databaseQuery(
+      queryFindColRowResultsFromSmallRoad,
+      [4, 1]
+    );
+
+    const getAllLatestSmallRoadResults = await databaseQuery(
+      queryGetLatestSmallRoadResults
+    );
+
+    const getLatestResultsFromSmallRoad = await databaseQuery(
+      queryGetLatestResultsFromSmallRoad
+    );
+
+    const latestResultsSmallRoad = getLatestResultsFromSmallRoad[0];
+    console.log(getLatestResultsFromSmallRoad);
+
+    const latestPosCol = latestResults?.num_posCol;
+    const latestPosRow = latestResults?.num_posRow;
+    const isSmallRoadHasData = getAllLatestSmallRoadResults.length > 0;
+    const srLatestCol = latestResultsSmallRoad?.sr_col + 1;
+
+    const isColThreeRowTwoFound =
+      findColThreeRowTwo.length > 0 || (latestPosCol == 3 && latestPosRow == 2);
+    const isColFourRowOneFound =
+      findColFourRowOne.length > 0 || (latestPosCol == 4 && latestPosRow == 1);
+
+    if (isColThreeRowTwoFound || isColFourRowOneFound) {
+      if (firstColumnLength == thirdColumnLength) {
+        await databaseQuery(queryUpdateSmallRoadResults, [
+          "Red",
+          isSmallRoadHasData ? null : 1,
+          isSmallRoadHasData ? null : 1,
+          latestResults?.results_id,
+        ]);
+      } else if (thirdColumnLength == firstColumnLength - 1) {
+        await databaseQuery(queryUpdateSmallRoadResults, [
+          "Blue",
+          isSmallRoadHasData ? null : 1,
+          isSmallRoadHasData ? null : 1,
+          latestResults?.results_id,
+        ]);
+      } else if (firstColumnLength > thirdColumnLength) {
+        await databaseQuery(queryUpdateSmallRoadResults, [
+          "Red",
+          isSmallRoadHasData ? null : 1,
+          isSmallRoadHasData ? null : 1,
+          latestResults?.results_id,
+        ]);
+      }
+    }
+
     const resultsData = await databaseQuery(queryGetAllBigEyeBoyResults);
+
+    console.log("First column length: ", firstColumnLength);
+    console.log("Third column length: ", thirdColumnLength);
 
     const data = {
       bigEyeBoyData: resultsData,
+      smallRoadData: getAllLatestSmallRoadResults,
       predictionsData: {
         isRowColTwoOrThreeFound: isColRowTwoFound || isColRowThreeFound,
         isBigEyeBoyHasData: isColRowTwoFound || isColRowThreeFound,

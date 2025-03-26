@@ -1,6 +1,8 @@
 import React from 'react'
+import { initialSmallRoadData } from '../utils/convertRoadResults'
 
-function SmallRoad({ sr }) {
+function SmallRoad({ sr, smallRoadData }) {
+    // console.log(smallRoadData)
     return (
         <div className='w-full'>
             {Object.keys(sr).map(key => (
@@ -8,6 +10,7 @@ function SmallRoad({ sr }) {
                     key={key}
                     className='h-full'>
                     {sr[key].map(col => {
+                        const initData = initialSmallRoadData(col.columnPosition, col.rowPosition, smallRoadData)
                         return (
                             <div
                                 key={col.colId}
@@ -16,7 +19,7 @@ function SmallRoad({ sr }) {
                                 ${col.styleBorderBox == false ? "border-b-2 border-b-gray-300" : ""}
                                  h-[calc(100%/6)] shadow-inner shadow-gray-200 flex justify-center items-center relative`}
                             >
-                                <p></p>
+                                <p className={`${initData?.style}`}></p>
                             </div>
                         )
                     })}
