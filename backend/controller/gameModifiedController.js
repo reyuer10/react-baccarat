@@ -695,6 +695,7 @@ exports.addGameResults = async (req, res) => {
           }
         }
       }
+
       if (isPrevLocalResultsBanker) {
         const isLatestResultCountHasValue = !latestResultCount
           ? 1
@@ -912,7 +913,7 @@ exports.secondaryAddGameResults = async (req, res) => {
     "SELECT bigEyeBoy_resultName as `name`, bigEyeBoy_numPosCol as `column`, bigEyeBoy_numPosRow as `row` FROM tb_results WHERE result_name != 'Tie' AND bigEyeBoy_resultName != ''";
 
   const queryGetThreeLatestColResults =
-    "SELECT result_name, num_posCol FROM tb_results WHERE result_name != 'Tie' order by result_count desc LIMIT 3";
+    "SELECT result_name, result_count FROM tb_results WHERE result_name != 'Tie' order by result_count desc LIMIT 3";
 
   const queryGetTwoLatestResults =
     "SELECT * FROM tb_results WHERE result_name != 'Tie' order by results_id desc LIMIT 2";
@@ -983,17 +984,17 @@ exports.secondaryAddGameResults = async (req, res) => {
 
     const firstAllColumnDataFromResults = await databaseQuery(
       queryGetAllColumnDataFromResults,
-      [firstLatestColResults?.num_posCol]
+      [firstLatestColResults?.result_count]
     );
 
     const secondAllColumnDataFromResults = await databaseQuery(
       queryGetAllColumnDataFromResults,
-      [secondLatestColResults?.num_posCol]
+      [secondLatestColResults?.result_count]
     );
 
     const thirdAllColumnDataFromResults = await databaseQuery(
       queryGetAllColumnDataFromResults,
-      [thirdLatestColResults?.num_posCol]
+      [thirdLatestColResults?.result_count]
     );
 
     const getLatestBigEyeBoyResultCount = await databaseQuery(
@@ -1025,6 +1026,8 @@ exports.secondaryAddGameResults = async (req, res) => {
     );
 
     const hasDuplicateItemOnBigEyeBoy = findDuplicateItemOnBigEyeBoy.length > 0;
+    // console.log("duplicate: ", getLatestItemOnBigEyeBoy)
+    console.log("latest id: ", resultsIdFromBigEyeBoyResultsCount);
 
     function isRowColTaken(resultName) {
       const futurePreviousRow = previousResults?.bigEyeBoy_numPosRow + 1;
@@ -1226,6 +1229,14 @@ exports.secondaryAddGameResults = async (req, res) => {
       latestResults?.results_id,
     ];
 
+    const redIncrementColumnAndResultCount = [
+      "Red",
+      previousResults?.bigEyeBoy_numPosCol + 1,
+      previousResults?.bigEyeBoy_numPosCol + 1,
+      previousResults?.bigEyeBoy_numPosRow,
+      latestResults?.results_id,
+    ];
+
     const isFirstColumnLessThanSecondColumn =
       firstColumnLength < secondColumnLength;
 
@@ -1247,6 +1258,10 @@ exports.secondaryAddGameResults = async (req, res) => {
       isColTwoOrThreeFound &&
       isLatestResultsNotTie &&
       isPrevNameResultNotMatchToCurrent;
+
+    console.log("Third column: ", thirdColumnLength);
+    console.log("Second column: ", secondColumnLength);
+    console.log("First column: ", firstColumnLength);
 
     if (isCurrResultsNotMatch) {
       if (isFirstColumnLessThanSecondColumn) {
@@ -1379,17 +1394,38 @@ exports.secondaryAddGameResults = async (req, res) => {
             await databaseQuery(queryInsertBigEyeBoyData, blueResetColumn);
           }
         } else if (isFirstColumnGreaterThanSecondColumn) {
+          console.log("is this console? (default)");
+
           if (previousResults?.bigEyeBoy_resultName == "Blue") {
             await databaseQuery(queryInsertBigEyeBoyData, redResetColumn);
           } else if (
             isRowColTaken("Red") ||
             previousResults?.bigEyeBoy_numPosRow > 5
           ) {
-            await databaseQuery(queryInsertBigEyeBoyData, redIncrementColumn);
+            if (previousResults?.bigEyeBoy_numPosRow == 1) {
+              await databaseQuery(
+                queryInsertBigEyeBoyData,
+                redIncrementColumnAndResultCount
+              );
+            } else {
+              await databaseQuery(queryInsertBigEyeBoyData, redIncrementColumn);
+            }
+            console.log("is this console? (1)");
           } else {
             if (hasDuplicateItemOnBigEyeBoy) {
-              await databaseQuery(queryInsertBigEyeBoyData, redIncrementColumn);
+              if (previousResults?.bigEyeBoy_numPosRow == 1) {
+                await databaseQuery(
+                  queryInsertBigEyeBoyData,
+                  redIncrementColumnAndResultCount
+                );
+              } else {
+                await databaseQuery(
+                  queryInsertBigEyeBoyData,
+                  redIncrementColumn
+                );
+              }
             } else {
+              console.log("is this console? (3)", previousResults);
               await databaseQuery(queryInsertBigEyeBoyData, redIncrementRow);
             }
           }
