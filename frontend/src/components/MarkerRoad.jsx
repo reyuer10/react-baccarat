@@ -17,7 +17,7 @@ function MarkerRoad({ m, resultBoardMarkerData }) {
                     {m[key].map(col => {
                         return (<div
                             key={col.colId}
-                            className={`h-[calc(100%/6)] border border-gray-300 shadow-inner shadow-gray-500 flex justify-center items-center `}
+                            className={`h-[calc(100%/6)] border border-orange-200 flex justify-center items-center `}
                         >
                             <p className={`absolute result-text-shadow px-2  rounded-full ${handleFormatStyleResults(handleShowResultsOnMarkerRoadBy(col.colId, resultBoardMarkerData))}`}>
                                 {handleShowResultsOnMarkerRoadBy(col.colId, resultBoardMarkerData)}

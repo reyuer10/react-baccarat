@@ -946,13 +946,19 @@ exports.secondaryAddGameResults = async (req, res) => {
     "SELECT results_id, bigEyeBoy_numPosRow FROM tb_results WHERE results_id BETWEEN ? AND ?";
 
   const queryUpdateSmallRoadResults =
-    "UPDATE tb_results SET sr_name = ?, sr_col = ?, sr_row = ? WHERE results_id = ?";
+    "UPDATE tb_results SET sr_name = ?, sr_grpCount = ?, sr_col = ?, sr_row = ? WHERE results_id = ?";
 
   const queryGetLatestSmallRoadResults =
     "SELECT sr_name, sr_col, sr_row FROM tb_results WHERE result_name != 'Tie' AND sr_name != '' AND sr_col != '' AND sr_row != '' order by results_id desc";
 
   const queryGetLatestResultsFromSmallRoad =
-    "SELECT sr_name, sr_col, sr_row FROM tb_results WHERE result_name != 'Tie' AND sr_name != '' AND sr_col != '' AND sr_row != '' order by results_id desc LIMIT 1 OFFSET 1";
+    "SELECT sr_name, sr_col, sr_row FROM tb_results WHERE result_name != 'Tie' AND sr_name != '' AND sr_col != '' AND sr_row != '' order by results_id desc LIMIT 1";
+
+  const queryGetLatestGroupCountFromSmallRoad =
+    "SELECT results_id, sr_grpCount FROM tb_results WHERE sr_grpCount != 0 order by results_id desc LIMIT 1";
+
+  const queryGetTwoLatestGroupCountFromSmallRoad =
+    "SELECT results_id, sr_name, sr_col, sr_row FROM tb_results WHERE result_name != 'Tie' AND sr_name != '' AND sr_col != '' AND sr_row != '' order by results_id desc LIMIT 2";
 
   try {
     const findBigEyeBoyResultsUsingRowColToLatest = await databaseQuery(
@@ -1453,52 +1459,245 @@ exports.secondaryAddGameResults = async (req, res) => {
       queryGetLatestResultsFromSmallRoad
     );
 
-    const latestResultsSmallRoad = getLatestResultsFromSmallRoad[0];
-    console.log(getLatestResultsFromSmallRoad);
+    const getLatestGroupCountFromSmallRoad = await databaseQuery(
+      queryGetLatestGroupCountFromSmallRoad
+    );
+
+    const getTwoLatestGroupCountFromSmallRoad = await databaseQuery(
+      queryGetTwoLatestGroupCountFromSmallRoad
+    );
+
+    const firstResultsFromSmallRoad = getTwoLatestGroupCountFromSmallRoad[0];
+    const secondResultsFromSmallRoad = getTwoLatestGroupCountFromSmallRoad[1];
+
+    const isFirstAndSecondRowResultsEqual =
+      firstResultsFromSmallRoad?.sr_row == secondResultsFromSmallRoad?.sr_row &&
+      firstResultsFromSmallRoad?.sr_name == secondResultsFromSmallRoad?.sr_name;
+
+    const smallRoadLatestGrpCount =
+      getLatestGroupCountFromSmallRoad[0]?.sr_grpCount;
+
+    const previousResultsSmallRoad = getLatestResultsFromSmallRoad[0];
 
     const latestPosCol = latestResults?.num_posCol;
     const latestPosRow = latestResults?.num_posRow;
+
+    const allLatestSmallRoadResults = getAllLatestSmallRoadResults;
     const isSmallRoadHasData = getAllLatestSmallRoadResults.length > 0;
-    const srLatestCol = latestResultsSmallRoad?.sr_col + 1;
+
+    const smallRoadPrevCol = previousResultsSmallRoad?.sr_col;
+    const smallRoadPrevRow = previousResultsSmallRoad?.sr_row;
+    const smallRoadPrevName = previousResultsSmallRoad?.sr_name;
+
+    const isColRowSmallRoadResultsTaken = (resultsName) => {
+      const isColRowTaken = allLatestSmallRoadResults.some(
+        (res) =>
+          res.sr_col == smallRoadPrevCol && res.sr_row == smallRoadPrevRow + 1
+      );
+
+      const isColRowWithNameTaken = allLatestSmallRoadResults.find(
+        (res) =>
+          res.sr_col + 1 == smallRoadPrevCol &&
+          res.sr_row == smallRoadPrevRow + 1 &&
+          res.sr_name == resultsName
+      );
+
+      return isColRowTaken || isColRowWithNameTaken;
+    };
+
+    const srIncrementPrevCol = smallRoadPrevCol + 1;
+    const srIncrementPrevRow = smallRoadPrevRow + 1;
+    const srIncrementPrevGrpCount = smallRoadLatestGrpCount + 1;
+
+    const bigRoadPrevCol = latestResults?.num_posCol;
+    const bigRoadPrevRow = latestResults?.num_posRow;
+
+    const smallRoadRedIncrementRow = [
+      "Red", // sr_name
+      isSmallRoadHasData ? 0 : 1,
+      isSmallRoadHasData ? smallRoadPrevCol : 1, // sr_col
+      isSmallRoadHasData ? srIncrementPrevRow : 1, // sr_row
+      latestResults?.results_id, // results_id
+    ];
+
+    const smallRoadRedIncrementColumn = [
+      "Red", // sr_name
+      0,
+      isSmallRoadHasData ? srIncrementPrevCol : 1, // sr_col
+      isSmallRoadHasData ? smallRoadPrevRow : 1, // sr_row
+      latestResults?.results_id, // results_id
+    ];
+
+    const smallRoadRedResetColumn = [
+      "Red", // sr_name
+      isSmallRoadHasData ? srIncrementPrevGrpCount : 1,
+      isSmallRoadHasData ? srIncrementPrevGrpCount : 1, // sr_col
+      isSmallRoadHasData ? 1 : 1, // sr_row
+      latestResults?.results_id, // results_id
+    ];
+
+    const smallRoadBlueResetColumn = [
+      "Blue", // sr_name
+      isSmallRoadHasData ? srIncrementPrevGrpCount : 1,
+      isSmallRoadHasData ? srIncrementPrevGrpCount : 1, // sr_col
+      isSmallRoadHasData ? 1 : 1, // sr_row
+      latestResults?.results_id, // results_id
+    ];
+
+    const smallRoadBlueIncrementColumn = [
+      "Blue", // sr_name
+      0,
+      isSmallRoadHasData ? srIncrementPrevCol : 1, // sr_col
+      isSmallRoadHasData ? smallRoadPrevRow : 1, // sr_row
+      latestResults?.results_id, // results_id
+    ];
 
     const isColThreeRowTwoFound =
-      findColThreeRowTwo.length > 0 || (latestPosCol == 3 && latestPosRow == 2);
+      findColThreeRowTwo.length > 0 || (latestPosCol >= 3 && latestPosRow >= 2);
     const isColFourRowOneFound =
-      findColFourRowOne.length > 0 || (latestPosCol == 4 && latestPosRow == 1);
+      findColFourRowOne.length > 0 || (latestPosCol >= 4 && latestPosRow >= 1);
 
-    if (isColThreeRowTwoFound || isColFourRowOneFound) {
-      if (firstColumnLength == thirdColumnLength) {
-        await databaseQuery(queryUpdateSmallRoadResults, [
-          "Red",
-          isSmallRoadHasData ? null : 1,
-          isSmallRoadHasData ? null : 1,
-          latestResults?.results_id,
-        ]);
+    console.log("First column: ", firstColumnLength);
+    console.log("Second column: ", thirdColumnLength);
+
+    if (
+      (isColThreeRowTwoFound || isColFourRowOneFound) &&
+      isLatestResultsNotTie
+    ) {
+      if (firstColumnLength < thirdColumnLength) {
+        if (bigRoadPrevRow < 2 && firstColumnLength < 2) {
+          if (smallRoadPrevName == "Blue") {
+            await databaseQuery(
+              queryUpdateSmallRoadResults,
+              smallRoadBlueIncrementColumn
+            );
+          } else {
+            await databaseQuery(
+              queryUpdateSmallRoadResults,
+              smallRoadBlueResetColumn
+            );
+          }
+        } else if (bigRoadPrevRow < 3 && firstColumnLength < 3) {
+          if (smallRoadPrevName == "Blue") {
+            await databaseQuery(
+              queryUpdateSmallRoadResults,
+              smallRoadRedResetColumn
+            );
+          } else if (smallRoadPrevName == "Red") {
+            await databaseQuery(
+              queryUpdateSmallRoadResults,
+              smallRoadBlueResetColumn
+            );
+          } else {
+            await databaseQuery(
+              queryUpdateSmallRoadResults,
+              smallRoadRedResetColumn
+            );
+          }
+        } else {
+          if (smallRoadPrevRow > 5) {
+            await databaseQuery(
+              queryUpdateSmallRoadResults,
+              smallRoadRedIncrementColumn
+            );
+          } else {
+            if (
+              isColRowSmallRoadResultsTaken("Red") ||
+              isFirstAndSecondRowResultsEqual
+            ) {
+              await databaseQuery(
+                queryUpdateSmallRoadResults,
+                smallRoadRedIncrementColumn
+              );
+            } else {
+              console.log("is this console?");
+              await databaseQuery(
+                queryUpdateSmallRoadResults,
+                smallRoadRedIncrementRow
+              );
+            }
+          }
+        }
+      } else if (firstColumnLength == thirdColumnLength) {
+        if (bigRoadPrevRow < 3 && firstColumnLength < 3) {
+          if (smallRoadPrevName == "Blue") {
+            await databaseQuery(
+              queryUpdateSmallRoadResults,
+              smallRoadRedResetColumn
+            );
+          } else if (smallRoadPrevName == "Red") {
+            await databaseQuery(
+              queryUpdateSmallRoadResults,
+              smallRoadBlueResetColumn
+            );
+          } else {
+            await databaseQuery(
+              queryUpdateSmallRoadResults,
+              smallRoadRedResetColumn
+            );
+          }
+        } else {
+          if (isFirstAndSecondRowResultsEqual) {
+            await databaseQuery(
+              queryUpdateSmallRoadResults,
+              smallRoadRedIncrementColumn
+            );
+          } else {
+            await databaseQuery(
+              queryUpdateSmallRoadResults,
+              smallRoadRedIncrementRow
+            );
+          }
+        }
       } else if (thirdColumnLength == firstColumnLength - 1) {
-        await databaseQuery(queryUpdateSmallRoadResults, [
-          "Blue",
-          isSmallRoadHasData ? null : 1,
-          isSmallRoadHasData ? null : 1,
-          latestResults?.results_id,
-        ]);
+        await databaseQuery(
+          queryUpdateSmallRoadResults,
+          smallRoadBlueResetColumn
+        );
       } else if (firstColumnLength > thirdColumnLength) {
-        await databaseQuery(queryUpdateSmallRoadResults, [
-          "Red",
-          isSmallRoadHasData ? null : 1,
-          isSmallRoadHasData ? null : 1,
-          latestResults?.results_id,
-        ]);
+        if (smallRoadPrevName == "Blue") {
+          await databaseQuery(
+            queryUpdateSmallRoadResults,
+            smallRoadRedResetColumn
+          );
+        } else {
+          if (smallRoadPrevRow > 5) {
+            await databaseQuery(
+              queryUpdateSmallRoadResults,
+              smallRoadRedIncrementColumn
+            );
+          } else {
+            if (isColRowSmallRoadResultsTaken()) {
+              await databaseQuery(
+                queryUpdateSmallRoadResults,
+                smallRoadRedIncrementColumn
+              );
+            } else {
+              if (isFirstAndSecondRowResultsEqual) {
+                await databaseQuery(
+                  queryUpdateSmallRoadResults,
+                  smallRoadRedIncrementColumn
+                );
+              } else {
+                await databaseQuery(
+                  queryUpdateSmallRoadResults,
+                  smallRoadRedIncrementRow
+                );
+              }
+            }
+          }
+        }
       }
     }
 
     const resultsData = await databaseQuery(queryGetAllBigEyeBoyResults);
-
-    console.log("First column length: ", firstColumnLength);
-    console.log("Third column length: ", thirdColumnLength);
+    const smallRoadResults = await databaseQuery(
+      queryGetLatestSmallRoadResults
+    );
 
     const data = {
       bigEyeBoyData: resultsData,
-      smallRoadData: getAllLatestSmallRoadResults,
+      smallRoadData: smallRoadResults,
       predictionsData: {
         isRowColTwoOrThreeFound: isColRowTwoFound || isColRowThreeFound,
         isBigEyeBoyHasData: isColRowTwoFound || isColRowThreeFound,

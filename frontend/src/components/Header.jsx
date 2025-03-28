@@ -2,10 +2,10 @@ import React from 'react'
 
 function Header({ handleFetchResetGameResults, round }) {
     return (
-        <div className='flex items-center space-x-2'>
+        <div className='flex items-center space-x-10'>
             <div>
                 <button
-                    className='px-4 py-2 rounded-lg bg-red-400 text-white text-2xl'
+                    className='px-4 py-2 rounded-lg bg-red-400 text-white text-2xl font-bold'
                     onClick={() => {
                         localStorage.removeItem("boardData")
                         handleFetchResetGameResults()
@@ -14,7 +14,7 @@ function Header({ handleFetchResetGameResults, round }) {
                 </button>
             </div>
             <div>
-                <span className=' roboto-mono-900 text-3xl opacity-20'> Round: {round}</span>
+                <span className=' roboto-mono-900 text-3xl text-white'> Round: {round}</span>
             </div>
         </div>
     )

@@ -244,14 +244,14 @@ function App() {
 
 
   return (
-    <div className='h-screen grid grid-cols-24 p-4 gap-2'>
-      <div className='border col-span-24 row-span-1'>
+    <div className='h-screen bg-[#282828] grid grid-cols-24 p-4 gap-2 '>
+      <div className=' col-span-24 row-span-1 mx-auto'>
         <Header
           handleFetchResetGameResults={handleFetchResetGameResults}
           round={round}
         />
       </div>
-      <div className='max-[1600px]:hidden border-6 border-gray-200 col-span-24 row-span-6 font-bold flex roboto-mono-900 relative bg-gray-50 overflow-x-hidden'>
+      <div className='max-[1600px]:hidden col-span-24 row-span-6 font-bold flex roboto-mono-900 relative bg-[#fff0cd] overflow-x-hidden'>
         <div className='absolute opacity-20 z-10 flex justify-center items-center h-full w-full '>
           <p className=' text-[100px] tracking-wider'>BIG ROAD</p>
         </div>
@@ -267,7 +267,7 @@ function App() {
           })}
         </div>
       </div>
-      <div className='max-[1600px]:hidden border-4 border-gray-200 col-span-24 row-span-4 font-bold flex roboto-mono-900 relative bg-gray-50 overflow-x-hidden'>
+      <div className='max-[1600px]:hidden col-span-24 row-span-4 font-bold flex roboto-mono-900 relative bg-[#fff0cd] overflow-x-hidden'>
         <div className='absolute opacity-20 z-10 flex justify-center items-center h-full w-full'>
           <p className=' text-[80px] tracking-wider'>BIG EYE BOY</p>
         </div>
@@ -279,7 +279,7 @@ function App() {
           })}
         </div>
       </div>
-      <div className='max-[1600px]:hidden border-4 border-gray-200 col-span-12 row-span-4 font-bold flex roboto-mono-900 relative bg-gray-50 overflow-x-hidden'>
+      <div className='max-[1600px]:hidden col-span-12 row-span-4 font-bold flex roboto-mono-900 relative bg-[#fff0cd] overflow-x-hidden'>
         <div className='absolute opacity-20 z-10 flex justify-center items-center h-full w-full'>
           <p className=' text-[60px] tracking-wider'>SMALL ROAD</p>
         </div>
@@ -291,7 +291,7 @@ function App() {
           })}
         </div>
       </div>
-      <div className='max-[1600px]:hidden border-4 border-gray-200 col-span-12 row-span-4 font-bold flex roboto-mono-900 relative bg-gray-50 overflow-x-hidden'>
+      <div className='max-[1600px]:hidden col-span-12 row-span-4 font-bold flex roboto-mono-900 relative bg-[#fff0cd] overflow-x-hidden'>
         <div className='absolute opacity-20 z-10 flex justify-center items-center h-full w-full'>
           <p className='text-[60px] tracking-wider'>COCKROACH PIG</p>
         </div>
@@ -303,7 +303,7 @@ function App() {
           })}
         </div>
       </div>
-      <div className='max-[1600px]:hidden border-6 border-gray-200 col-span-22 row-span-6 font-bold flex roboto-mono-900 relative bg-gray-50 overflow-x-hidden'>
+      <div className='max-[1600px]:hidden col-span-22 row-span-6 font-bold flex roboto-mono-900 relative bg-[#fff0cd] overflow-x-hidden'>
         <div className='absolute opacity-20 z-10 flex justify-center items-center h-full w-full'>
           <p className=' text-[100px] tracking-wider'>MARKER ROAD</p>
         </div>
@@ -319,7 +319,7 @@ function App() {
           })}
         </div>
       </div>
-      <div className='col-span-2 row-span-6 border-6 border-gray-200 shadow-inner shadow-gray-500 flex justify-center flex-col items-center'>
+      <div className='col-span-2 row-span-6 bg-[#fff0cd] shadow-inner shadow-gray-500 flex justify-center flex-col items-center'>
         <Predictions
           predictionsData={predictionsData}
         />

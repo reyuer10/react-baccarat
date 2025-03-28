@@ -20,7 +20,7 @@ function BigRoad({ b, resultsBoardData }) {
                         return (
                             <div
                                 key={col.id}
-                                className="h-[calc(100%/6)] border border-gray-300 shadow-inner shadow-gray-500 flex justify-center items-center relative"
+                                className="h-[calc(100%/6)] border border-orange-200 flex justify-center items-center relative"
                             >
                                 <p className={`absolute result-text-shadow px-2 rounded-full ${handleFormatStyleResults(resultData?.resultName)}`}>
                                     {resultData?.resultName}

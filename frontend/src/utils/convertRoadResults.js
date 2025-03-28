@@ -7,9 +7,9 @@ export const customizeStyleResults = (resultName) => {
 
 export const customizeStyleResultsForSmallRoad = (resultName) => {
   if (resultName == "Red")
-    return "rounded-full bg-red-500 h-[25px] w-[25px] absolute border-4 border-white";
+    return "rounded-full bg-red-500 shadow-sm shadow-black h-[19px] w-[19px] absolute";
   if (resultName == "Blue")
-    return "rounded-full bg-cyan-600 h-[25px] w-[25px] absolute border-4 border-white";
+    return "rounded-full bg-cyan-600 h-[19px] w-[19px] absolute";
 };
 
 export const initialSmallRoadData = (col, row, arrData) => {
