@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 
 function Predictions({ predictionsData }) {
-    const { isRowColTwoOrThreeFound, isBigEyeBoyHasData, isSmallRoadHasData, bigEyeBoy } = predictionsData;
+    const { isRowColTwoOrThreeFound, isBigEyeBoyHasData, isSmallRoadHasData, bigEyeBoy, smallRoad } = predictionsData;
 
     const [predictions, setPredictions] = useState([
         {
@@ -14,6 +14,9 @@ function Predictions({ predictionsData }) {
             predictionCockroachPigFromPlayer: null,
             predictionCockroachPigFromBanker: null,
         }])
+
+
+    console.log(predictionsData)
 
 
     function customizeStyleBigEyeBoy(colorName) {
@@ -36,6 +39,11 @@ function Predictions({ predictionsData }) {
 
                     const styleConvertBigEyeBoyBanker = bigEyeBoy?.banker == "Blue" ? "cyan-600" : "red-500";
                     const styleConvertBigEyeBoyPlayer = bigEyeBoy?.player == "Blue" ? "cyan-600" : "red-500"
+
+                    const styleConvertSmallRoadBanker = smallRoad?.banker == "Blue" ? "cyan-600" : "red-500";
+                    const styleConvertSmallRoadPlayer = smallRoad?.player == "Blue" ? "cyan-600" : "red-500";
+
+
                     return (
                         <div
                             className={` flex space-x-4 transition-all
@@ -45,15 +53,22 @@ function Predictions({ predictionsData }) {
                                 <p className={`${isRowColTwoOrThreeFound ? "bg-red-500" : "bg-gray-400"} text-2xl text-white result-text-shadow border-4 border-white ring-2 ring-red-500 px-[10px] rounded-full`}>
                                     {p.predictionBanker}
                                 </p>
+
+
                                 <p className={`h-[35px] w-[35px] rounded-full border-6 ring-2 border-white
                              ${customizeStyleBigEyeBoy(styleConvertBigEyeBoyBanker)}
                                 `}
                                 ></p>
+
+
                                 <p className={`h-[35px] w-[35px] rounded-full
-                                ${isSmallRoadHasData ? "" : "bg-gray-400"}`}
+                                ${isSmallRoadHasData ? `bg-${styleConvertSmallRoadBanker}` : "bg-gray-400"}`}
                                 >
                                     {p.predictionSmallRoadFromBanker}
                                 </p>
+
+
+
                                 <p className={`h-[35px] w-[10px] mx-auto rotate-45
                                 ${p.predictionBigEyeBoy == null ? "bg-gray-400" : ""}
                                 `}
@@ -61,6 +76,10 @@ function Predictions({ predictionsData }) {
                                     {p.predictionCockroachPigFromBanker}
                                 </p>
                             </div>
+
+
+
+
                             <div className='space-y-4 flex flex-col items-center'>
                                 <p className={`${isRowColTwoOrThreeFound ? "bg-cyan-600" : " bg-gray-400"} text-2xl text-white result-text-shadow border-4 border-white ring-2 ring-cyan-600 px-[10px] rounded-full`}>
                                     {p.predictionPlayer}
@@ -72,7 +91,7 @@ function Predictions({ predictionsData }) {
                                 `}
                                 ></p>
                                 <p className={`h-[35px] w-[35px] rounded-full
-                                ${isSmallRoadHasData ? "" : "bg-gray-400"}`}
+                                ${isSmallRoadHasData ? `bg-${styleConvertSmallRoadPlayer}` : "bg-gray-400"}`}
                                 >
                                     {p.predictionSmallRoadFromPlayer}
                                 </p>

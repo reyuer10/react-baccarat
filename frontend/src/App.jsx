@@ -227,6 +227,7 @@ function App() {
     const handleFetchGameResults = async () => {
       try {
         const response = await fetchGetResults();
+        console.log(response)
         setResultBigEyeBoyData(response.bigEyeBoyData)
         setResultsBoardData(response.bigRoadData);
         setResultsBoardMarkerData(response.markerRoadData);
