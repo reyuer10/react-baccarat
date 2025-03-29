@@ -14,7 +14,7 @@ function Header({ handleFetchResetGameResults, round }) {
                 </button>
             </div>
             <div>
-                <span className=' roboto-mono-900 text-3xl text-white'> Round: {round}</span>
+                <span className=' roboto-mono-900 text-3xl text-white result-text-shadow'> ROUND: {round}</span>
             </div>
         </div>
     )

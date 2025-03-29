@@ -60,6 +60,7 @@ function App() {
           setResultSmallRoadData(responseFromBigEyeBoyData.smallRoadData)
           setResultsBoardData(response.bigRoadData);
           setResultsBoardMarkerData(response.markerRoadData);
+          setRound(response.markerRoadData.length)
 
         } else if (keySequence == 2) {
           const response = await fetchAddResults({
@@ -71,6 +72,7 @@ function App() {
           setResultSmallRoadData(responseFromBigEyeBoyData.smallRoadData)
           setResultsBoardData(response.bigRoadData);
           setResultsBoardMarkerData(response.markerRoadData)
+          setRound(response.markerRoadData.length)
 
         } else if (keySequence == 3) {
           const response = await fetchAddResults({
@@ -82,6 +84,8 @@ function App() {
           setResultSmallRoadData(responseFromBigEyeBoyData.smallRoadData)
           setResultsBoardData(response.bigRoadData);
           setResultsBoardMarkerData(response.markerRoadData)
+          setRound(response.markerRoadData.length)
+
 
         } else if (keySequence == 4) {
           const response = await fetchDeleteLatestGameResults();
@@ -90,6 +94,9 @@ function App() {
           setResultBigEyeBoyData(response.bigEyeBoyData)
           setResultsBoardData(response.bigRoadData);
           setResultsBoardMarkerData(response.markerRoadData)
+          setResultSmallRoadData(response.smallRoadData)
+          setRound(response.markerRoadData.length)
+
         }
         keySequence = ''
       }
@@ -233,6 +240,7 @@ function App() {
         setResultsBoardMarkerData(response.markerRoadData);
         setPredictionsData(response.predictionsData)
         setResultSmallRoadData(response.smallRoadData)
+        setRound(response.markerRoadData.length)
       } catch (error) {
         console.log(error);
       }
@@ -320,7 +328,7 @@ function App() {
           })}
         </div>
       </div>
-      <div className='col-span-2 row-span-6 bg-[#fff0cd] shadow-inner shadow-gray-500 flex justify-center flex-col items-center'>
+      <div className='max-[1600px]:hidden col-span-2 row-span-6 bg-[#fff0cd] flex justify-center flex-col items-center'>
         <Predictions
           predictionsData={predictionsData}
         />

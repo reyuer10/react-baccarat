@@ -269,6 +269,9 @@ exports.undoGameResults = async (req, res) => {
   const queryGetThreeLatestColResults =
     "SELECT result_name, num_posCol FROM tb_results WHERE result_name != 'Tie' order by result_count desc LIMIT 3";
 
+  const queryGetLatestSmallRoadResults =
+    "SELECT sr_name, sr_col, sr_row FROM tb_results WHERE result_name != 'Tie' AND sr_name != '' AND sr_col != '' AND sr_row != '' order by results_id desc";
+
   try {
     const getThreeLatestResults = await databaseQuery(
       queryGetThreeLatestColResults
@@ -385,10 +388,57 @@ exports.undoGameResults = async (req, res) => {
         }
       }
 
+      function smallRoadPredictionLogic(leadName) {
+        if (leadName == "Banker") {
+          if (isCurrentResultsBlue) {
+            if (firstColumnLength == thirdColumnLength) {
+              return "Red";
+            } else if (firstColumnLength > thirdColumnLength) {
+              return "Blue";
+            } else {
+              return "Blue";
+            }
+          } else {
+            if (firstColumnLength == thirdColumnLength) {
+              return "Blue";
+            } else if (firstColumnLength > thirdColumnLength) {
+              return "Red";
+            } else {
+              return "Red";
+            }
+          }
+        } else if (leadName == "Player") {
+          if (isCurrentResultsRed) {
+            if (firstColumnLength == thirdColumnLength) {
+              return "Red";
+            } else if (firstColumnLength > thirdColumnLength) {
+              return "Blue";
+            } else {
+              return "Blue";
+            }
+          } else {
+            if (firstColumnLength == thirdColumnLength) {
+              return "Blue";
+            } else if (firstColumnLength > thirdColumnLength) {
+              return "Red";
+            } else {
+              return "Red";
+            }
+          }
+        }
+      }
+
+      const smallRoadResults = await databaseQuery(
+        queryGetLatestSmallRoadResults
+      );
+
+      const isSmallRoadHasData = smallRoadResults.length > 0;
+
       return res.status(OK).send({
         bigRoadData: resultsQueryGetResultsExceptTie,
         bigEyeBoyData: getAllBigEyeBoyResults,
         markerRoadData: resultsQueryGetResults,
+        smallRoadData: smallRoadResults,
         predictionsData: {
           isRowColTwoOrThreeFound: isColRowTwoOrThreeFound
             ? isColRowTwoFound || isColRowThreeFound
@@ -396,9 +446,14 @@ exports.undoGameResults = async (req, res) => {
           isBigEyeBoyHasData: isColRowTwoOrThreeFound
             ? isColRowTwoFound || isColRowThreeFound
             : null,
+          isSmallRoadHasData: isSmallRoadHasData,
           bigEyeBoy: {
             banker: bigEyeBoyPrediction("Banker"),
             player: bigEyeBoyPrediction("Player"),
+          },
+          smallRoad: {
+            banker: smallRoadPredictionLogic("Banker"),
+            player: smallRoadPredictionLogic("Player"),
           },
         },
       });
@@ -1550,6 +1605,9 @@ exports.secondaryAddGameResults = async (req, res) => {
     const srIncrementPrevCol = smallRoadPrevCol + 1;
     const srIncrementPrevRow = smallRoadPrevRow + 1;
     const srIncrementPrevGrpCount = smallRoadLatestGrpCount + 1;
+    const isPrevResultNotEqualToCurrent =
+      smallRoadPrevRow != 1 ? srIncrementPrevGrpCount : smallRoadPrevCol + 1;
+    console.log(latestPosRow);
 
     const bigRoadPrevCol = latestResults?.num_posCol;
     const bigRoadPrevRow = latestResults?.num_posRow;
@@ -1572,16 +1630,16 @@ exports.secondaryAddGameResults = async (req, res) => {
 
     const smallRoadRedResetColumn = [
       "Red", // sr_name
-      !smallRoadLatestGrpCount ? 1 : srIncrementPrevGrpCount,
-      isSmallRoadHasData ? srIncrementPrevGrpCount : 1, // sr_col
+      !smallRoadLatestGrpCount ? 1 : isPrevResultNotEqualToCurrent,
+      isSmallRoadHasData ? isPrevResultNotEqualToCurrent : 1, // sr_col
       isSmallRoadHasData ? 1 : 1, // sr_row
       latestResults?.results_id, // results_id
     ];
 
     const smallRoadBlueResetColumn = [
       "Blue", // sr_name
-      !smallRoadLatestGrpCount ? 1 : srIncrementPrevGrpCount,
-      isSmallRoadHasData ? srIncrementPrevGrpCount : 1, // sr_col
+      !smallRoadLatestGrpCount ? 1 : isPrevResultNotEqualToCurrent,
+      isSmallRoadHasData ? isPrevResultNotEqualToCurrent : 1, // sr_col
       isSmallRoadHasData ? 1 : 1, // sr_row
       latestResults?.results_id, // results_id
     ];
@@ -1622,10 +1680,20 @@ exports.secondaryAddGameResults = async (req, res) => {
         if (bigRoadPrevRow < 2 && firstColumnLength < 2) {
           if (secondColumnLength != fourthColumnLength) {
             if (smallRoadPrevName == "Blue") {
-              await databaseQuery(
-                queryUpdateSmallRoadResults,
-                smallRoadBlueIncrementRow
-              );
+              if (
+                isColRowSmallRoadResultsTaken("Blue") ||
+                isFirstAndSecondRowResultsEqual
+              ) {
+                await databaseQuery(
+                  queryUpdateSmallRoadResults,
+                  smallRoadBlueIncrementColumn
+                );
+              } else {
+                await databaseQuery(
+                  queryUpdateSmallRoadResults,
+                  smallRoadBlueIncrementRow
+                );
+              }
             } else {
               await databaseQuery(
                 queryUpdateSmallRoadResults,
@@ -1724,10 +1792,20 @@ exports.secondaryAddGameResults = async (req, res) => {
         if (bigRoadPrevRow < 2 && firstColumnLength < 2) {
           if (secondColumnLength != fourthColumnLength) {
             if (smallRoadPrevName == "Blue") {
-              await databaseQuery(
-                queryUpdateSmallRoadResults,
-                smallRoadBlueIncrementRow
-              );
+              if (
+                isColRowSmallRoadResultsTaken("Blue") ||
+                isFirstAndSecondRowResultsEqual
+              ) {
+                await databaseQuery(
+                  queryUpdateSmallRoadResults,
+                  smallRoadBlueIncrementColumn
+                );
+              } else {
+                await databaseQuery(
+                  queryUpdateSmallRoadResults,
+                  smallRoadBlueIncrementRow
+                );
+              }
             } else {
               await databaseQuery(
                 queryUpdateSmallRoadResults,
@@ -1764,7 +1842,7 @@ exports.secondaryAddGameResults = async (req, res) => {
             } else {
               await databaseQuery(
                 queryUpdateSmallRoadResults,
-                smallRoadRedIncrementColumn
+                smallRoadRedResetColumn
               );
             }
           }
@@ -1821,10 +1899,20 @@ exports.secondaryAddGameResults = async (req, res) => {
         }
       } else if (thirdColumnLength == firstColumnLength - 1) {
         if (smallRoadPrevName == "Blue") {
-          await databaseQuery(
-            queryUpdateSmallRoadResults,
-            smallRoadBlueIncrementRow
-          );
+          if (
+            isColRowSmallRoadResultsTaken("Blue") ||
+            isFirstAndSecondRowResultsEqual
+          ) {
+            await databaseQuery(
+              queryUpdateSmallRoadResults,
+              smallRoadBlueIncrementColumn
+            );
+          } else {
+            await databaseQuery(
+              queryUpdateSmallRoadResults,
+              smallRoadBlueIncrementRow
+            );
+          }
         } else {
           await databaseQuery(
             queryUpdateSmallRoadResults,
