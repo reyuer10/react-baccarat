@@ -42,6 +42,7 @@ function App() {
   const [resultBoardMarkerData, setResultsBoardMarkerData] = useState([])
   const [resultBigEyeBoyData, setResultBigEyeBoyData] = useState([])
   const [resultSmallRoadData, setResultSmallRoadData] = useState([])
+  const [resultsCockroachPigData, setResultsCockroachPigData] = useState([])
   const [predictionsData, setPredictionsData] = useState([])
 
   const [round, setRound] = useState(0)
@@ -54,10 +55,11 @@ function App() {
             result_name: "Player",
           })
 
-          const responseFromBigEyeBoyData = await fetchAddDetailGameResults();
-          setPredictionsData(responseFromBigEyeBoyData?.predictionsData)
-          setResultBigEyeBoyData(responseFromBigEyeBoyData.bigEyeBoyData)
-          setResultSmallRoadData(responseFromBigEyeBoyData.smallRoadData)
+          const responseRoadsData = await fetchAddDetailGameResults();
+          setPredictionsData(responseRoadsData?.predictionsData)
+          setResultBigEyeBoyData(responseRoadsData.bigEyeBoyData)
+          setResultSmallRoadData(responseRoadsData.smallRoadData)
+          setResultsCockroachPigData(responseRoadsData.cockroachPigData)
           setResultsBoardData(response.bigRoadData);
           setResultsBoardMarkerData(response.markerRoadData);
           setRound(response.markerRoadData.length)
@@ -66,10 +68,12 @@ function App() {
           const response = await fetchAddResults({
             result_name: "Banker",
           })
-          const responseFromBigEyeBoyData = await fetchAddDetailGameResults();
-          setPredictionsData(responseFromBigEyeBoyData?.predictionsData)
-          setResultBigEyeBoyData(responseFromBigEyeBoyData.bigEyeBoyData)
-          setResultSmallRoadData(responseFromBigEyeBoyData.smallRoadData)
+          const responseRoadsData = await fetchAddDetailGameResults();
+          console.log(responseRoadsData)
+          setPredictionsData(responseRoadsData?.predictionsData)
+          setResultBigEyeBoyData(responseRoadsData.bigEyeBoyData)
+          setResultSmallRoadData(responseRoadsData.smallRoadData)
+          setResultsCockroachPigData(responseRoadsData.cockroachPigData)
           setResultsBoardData(response.bigRoadData);
           setResultsBoardMarkerData(response.markerRoadData)
           setRound(response.markerRoadData.length)
@@ -82,6 +86,7 @@ function App() {
           setPredictionsData(responseFromBigEyeBoyData?.predictionsData)
           setResultBigEyeBoyData(responseFromBigEyeBoyData.bigEyeBoyData)
           setResultSmallRoadData(responseFromBigEyeBoyData.smallRoadData)
+          setResultsCockroachPigData(responseRoadsData.cockroachPigData)
           setResultsBoardData(response.bigRoadData);
           setResultsBoardMarkerData(response.markerRoadData)
           setRound(response.markerRoadData.length)
@@ -89,12 +94,12 @@ function App() {
 
         } else if (keySequence == 4) {
           const response = await fetchDeleteLatestGameResults();
-          // const responseFromBigEyeBoyData = await fetchAddDetailGameResults();
           setPredictionsData(response?.predictionsData);
           setResultBigEyeBoyData(response.bigEyeBoyData)
           setResultsBoardData(response.bigRoadData);
           setResultsBoardMarkerData(response.markerRoadData)
           setResultSmallRoadData(response.smallRoadData)
+          setResultsCockroachPigData(response.cockroachPigData)
           setRound(response.markerRoadData.length)
 
         }
@@ -240,6 +245,7 @@ function App() {
         setResultsBoardMarkerData(response.markerRoadData);
         setPredictionsData(response.predictionsData)
         setResultSmallRoadData(response.smallRoadData)
+        setResultsCockroachPigData(response.cockroachPigData)
         setRound(response.markerRoadData.length)
       } catch (error) {
         console.log(error);
@@ -307,7 +313,7 @@ function App() {
         <div className='flex z-20 w-full'>
           {boardData.cockroachPig.map((cp, index) => {
             return (
-              <CockroachPig cp={cp} key={index} />
+              <CockroachPig cp={cp} key={index} cockroachPigData={resultsCockroachPigData} />
             )
           })}
         </div>

@@ -12,6 +12,13 @@ export const customizeStyleResultsForSmallRoad = (resultName) => {
     return "rounded-full bg-cyan-600 h-[19px] w-[19px] absolute";
 };
 
+export const customizeStyleResultsForCockroachPig = (cp_name) => {
+  if (cp_name == "Red")
+    return "h-[25px] w-[5px] bg-red-500 mx-auto rotate-45 absolute";
+  if (cp_name == "Blue")
+    return "h-[25px] w-[5px] bg-cyan-600 mx-auto rotate-45 absolute";
+};
+
 export const initialSmallRoadData = (col, row, arrData) => {
   const foundColRowData = arrData?.find(
     (d) => d.sr_col == col && d.sr_row == row
@@ -29,6 +36,18 @@ export const initialBigEyeBoyData = (col, row, arrData) => {
   return foundColRowData
     ? {
         style: customizeStyleResults(foundColRowData?.name),
+        name: foundColRowData?.name,
+      }
+    : null;
+};
+
+export const initialCockroachPigData = (col, row, arrData) => {
+  const foundColRowData = arrData?.find(
+    (d) => d.cp_col == col && d.cp_row == row
+  );
+  return foundColRowData
+    ? {
+        style: customizeStyleResultsForCockroachPig(foundColRowData?.cp_name),
         name: foundColRowData?.name,
       }
     : null;
