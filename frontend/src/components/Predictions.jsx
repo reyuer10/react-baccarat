@@ -1,7 +1,16 @@
 import React, { useEffect, useState } from 'react'
 
 function Predictions({ predictionsData }) {
-    const { isRowColTwoOrThreeFound, isBigEyeBoyHasData, isSmallRoadHasData, bigEyeBoy, smallRoad } = predictionsData;
+
+    const {
+        isRowColTwoOrThreeFound,
+        isBigEyeBoyHasData,
+        isSmallRoadHasData,
+        isCockroachPigHasData,
+        bigEyeBoy,
+        smallRoad,
+        cockroachPig
+    } = predictionsData;
 
     const [predictions, setPredictions] = useState([
         {
@@ -43,6 +52,9 @@ function Predictions({ predictionsData }) {
                     const styleConvertSmallRoadBanker = smallRoad?.banker == "Blue" ? "cyan-600" : "red-500";
                     const styleConvertSmallRoadPlayer = smallRoad?.player == "Blue" ? "cyan-600" : "red-500";
 
+                    const styleConvertCockroachPigBanker = cockroachPig?.banker == "Blue" ? "cyan-600" : "red-500"
+                    const styleConvertCockroachPigPlayer = cockroachPig?.player == "Blue" ? "cyan-600" : "red-500"
+                    // isCockroachPigHasData
 
                     return (
                         <div
@@ -70,7 +82,7 @@ function Predictions({ predictionsData }) {
 
 
                                 <p className={`h-[35px] w-[10px] mx-auto rotate-45
-                                ${p.predictionBigEyeBoy == null ? "bg-gray-400" : ""}
+                                ${isCockroachPigHasData ? `bg-${styleConvertCockroachPigBanker}` : "bg-gray-400"}
                                 `}
                                 >
                                     {p.predictionCockroachPigFromBanker}
@@ -96,7 +108,7 @@ function Predictions({ predictionsData }) {
                                     {p.predictionSmallRoadFromPlayer}
                                 </p>
                                 <p className={`h-[35px] w-[10px] mx-auto rotate-45
-                                ${p.predictionBigEyeBoy == null ? "bg-gray-400" : ""}
+                                  ${isCockroachPigHasData ? `bg-${styleConvertCockroachPigPlayer}` : "bg-gray-400"}
                                 `}
                                 >
                                     {p.predictionCockroachPigFromPlayer}

@@ -47,6 +47,9 @@ exports.getGameResults = async (req, res) => {
   const queryFindColRowResultsFromSmallRoad =
     "SELECT results_id, sr_col, sr_row FROM tb_results WHERE num_posCol = ? AND num_posRow = ?";
 
+  const queryFindColRowResultsFromCockroachPig =
+    "SELECT results_id, cp_col, cp_row FROM tb_results WHERE num_posCol = ? AND num_posRow = ?";
+
   const queryGetCockroachPigResults =
     "SELECT cp_name, cp_col, cp_row FROM tb_results WHERE result_name != 'Tie' AND cp_name != '' AND cp_col != '' AND cp_row != '' order by results_id desc";
 
@@ -86,7 +89,7 @@ exports.getGameResults = async (req, res) => {
 
     const fourthAllColumnDataFromResults = await databaseQuery(
       queryGetAllColumnDataFromResults,
-      [fourthLatestColResults?.result_count]
+      [fourthLatestColResults?.num_posCol]
     );
 
     const firstColumnLength = firstAllColumnDataFromResults.length;
@@ -123,6 +126,18 @@ exports.getGameResults = async (req, res) => {
       queryFindColRowResultsFromSmallRoad,
       [4, 1]
     );
+
+    const cpFindColFourRowTwo = await databaseQuery(
+      queryFindColRowResultsFromCockroachPig,
+      [4, 2]
+    );
+
+    const cpFindColFiveRowOne = await databaseQuery(
+      queryFindColRowResultsFromCockroachPig,
+      [5, 1]
+    );
+    const isCockroachPigHasData =
+      cpFindColFourRowTwo.length > 0 || cpFindColFiveRowOne.length > 0;
 
     const isSmallRoadHasData =
       findColFourRowOne.length > 0 || findColThreeRowTwo.length > 0;
@@ -202,6 +217,46 @@ exports.getGameResults = async (req, res) => {
       }
     }
 
+    function cockroachPigLogic(leadName) {
+      if (leadName == "Banker") {
+        if (isCurrentResultsBlue) {
+          if (firstColumnLength == fourthColumnLength) {
+            return "Red";
+          } else if (firstColumnLength > fourthColumnLength) {
+            return "Blue";
+          } else {
+            return "Blue";
+          }
+        } else {
+          if (firstColumnLength == fourthColumnLength) {
+            return "Blue";
+          } else if (firstColumnLength > fourthColumnLength) {
+            return "Red";
+          } else {
+            return "Red";
+          }
+        }
+      } else if (leadName == "Player") {
+        if (isCurrentResultsRed) {
+          if (firstColumnLength == fourthColumnLength) {
+            return "Red";
+          } else if (firstColumnLength > fourthColumnLength) {
+            return "Blue";
+          } else {
+            return "Blue";
+          }
+        } else {
+          if (firstColumnLength == fourthColumnLength) {
+            return "Blue";
+          } else if (firstColumnLength > fourthColumnLength) {
+            return "Red";
+          } else {
+            return "Red";
+          }
+        }
+      }
+    }
+
     return res.status(OK).send({
       bigRoadData: getBoardDataExceptTie,
       markerRoadData: getBoardData,
@@ -218,7 +273,7 @@ exports.getGameResults = async (req, res) => {
             ? isColRowTwoFound || isColRowThreeFound
             : null,
         isSmallRoadHasData: isSmallRoadHasData,
-        isCockroachPigHasData: false,
+        isCockroachPigHasData: isCockroachPigHasData,
         bigEyeBoy: {
           banker: bigEyeBoyPrediction("Banker")
             ? bigEyeBoyPrediction("Banker")
@@ -230,6 +285,10 @@ exports.getGameResults = async (req, res) => {
         smallRoad: {
           banker: smallRoadPredictionLogic("Banker"),
           player: smallRoadPredictionLogic("Player"),
+        },
+        cockroachPig: {
+          banker: cockroachPigLogic("Banker"),
+          player: cockroachPigLogic("Player"),
         },
       },
     });
@@ -275,11 +334,13 @@ exports.undoGameResults = async (req, res) => {
     "SELECT * FROM tb_results order by results_id desc LIMIT 1";
 
   const queryGetThreeLatestColResults =
-    "SELECT result_name, num_posCol FROM tb_results WHERE result_name != 'Tie' order by result_count desc LIMIT 3";
+    "SELECT result_name, result_count FROM tb_results WHERE result_name != 'Tie' order by result_count desc LIMIT 4";
 
   const queryGetLatestSmallRoadResults =
     "SELECT sr_name, sr_col, sr_row FROM tb_results WHERE result_name != 'Tie' AND sr_name != '' AND sr_col != '' AND sr_row != '' order by results_id desc";
 
+  const queryGetCockroachRoadResults =
+    "SELECT cp_name, cp_col, cp_row FROM tb_results WHERE result_name != 'Tie' AND cp_name != '' AND cp_col != '' AND cp_row != '' order by results_id desc";
   try {
     const getThreeLatestResults = await databaseQuery(
       queryGetThreeLatestColResults
@@ -290,6 +351,7 @@ exports.undoGameResults = async (req, res) => {
     const firstLatestColResults = threeLatestResults[0];
     const secondLatestColResults = threeLatestResults[1];
     const thirdLatestColResults = threeLatestResults[2];
+    const fourthLatestColResults = threeLatestResults[3];
 
     const getPreviousResults = await databaseQuery(queryGetPreviousResults);
     const getLatestResultsId = await databaseQuery(queryGetLatestResultsId);
@@ -317,17 +379,22 @@ exports.undoGameResults = async (req, res) => {
     if (deleteLatestResults) {
       const firstAllColumnDataFromResults = await databaseQuery(
         queryGetAllColumnDataFromResults,
-        [firstLatestColResults?.num_posCol]
+        [firstLatestColResults?.result_count]
       );
 
       const secondAllColumnDataFromResults = await databaseQuery(
         queryGetAllColumnDataFromResults,
-        [secondLatestColResults?.num_posCol]
+        [secondLatestColResults?.result_count]
       );
 
       const thirdAllColumnDataFromResults = await databaseQuery(
         queryGetAllColumnDataFromResults,
-        [thirdLatestColResults?.num_posCol]
+        [thirdLatestColResults?.result_count]
+      );
+
+      const fourthAllColumnDataFromResults = await databaseQuery(
+        queryGetAllColumnDataFromResults,
+        [fourthLatestColResults?.result_count]
       );
 
       const getLatestResults = await databaseQuery(queryGetLatestResults);
@@ -336,6 +403,12 @@ exports.undoGameResults = async (req, res) => {
       const firstColumnLength = firstAllColumnDataFromResults.length;
       const secondColumnLength = secondAllColumnDataFromResults.length;
       const thirdColumnLength = thirdAllColumnDataFromResults.length;
+      const fourthColumnLength = fourthAllColumnDataFromResults.length;
+
+      console.log("First column: ", firstColumnLength);
+      console.log("Second column: ", secondColumnLength);
+      console.log("Third column: ", thirdColumnLength);
+      console.log("Fourth column: ", fourthColumnLength);
 
       const isCurrentResultsBlue = latestResults?.result_name == "Player";
       const isCurrentResultsRed = latestResults?.result_name == "Banker";
@@ -436,17 +509,63 @@ exports.undoGameResults = async (req, res) => {
         }
       }
 
+      function cockroachPigLogic(leadName) {
+        if (leadName == "Banker") {
+          if (isCurrentResultsBlue) {
+            if (firstColumnLength == fourthColumnLength) {
+              return "Red";
+            } else if (firstColumnLength > fourthColumnLength) {
+              return "Blue";
+            } else {
+              return "Blue";
+            }
+          } else {
+            if (firstColumnLength == fourthColumnLength) {
+              return "Blue";
+            } else if (firstColumnLength > fourthColumnLength) {
+              return "Red";
+            } else {
+              return "Red";
+            }
+          }
+        } else if (leadName == "Player") {
+          if (isCurrentResultsRed) {
+            if (firstColumnLength == fourthColumnLength) {
+              return "Red";
+            } else if (firstColumnLength > fourthColumnLength) {
+              return "Blue";
+            } else {
+              return "Blue";
+            }
+          } else {
+            if (firstColumnLength == fourthColumnLength) {
+              return "Blue";
+            } else if (firstColumnLength > fourthColumnLength) {
+              return "Red";
+            } else {
+              return "Red";
+            }
+          }
+        }
+      }
+
       const smallRoadResults = await databaseQuery(
         queryGetLatestSmallRoadResults
       );
 
+      const cockroachPigResults = await databaseQuery(
+        queryGetCockroachRoadResults
+      );
+
       const isSmallRoadHasData = smallRoadResults.length > 0;
+      const isCockroachPigHasData = cockroachPigResults.length > 0;
 
       return res.status(OK).send({
         bigRoadData: resultsQueryGetResultsExceptTie,
         bigEyeBoyData: getAllBigEyeBoyResults,
         markerRoadData: resultsQueryGetResults,
         smallRoadData: smallRoadResults,
+        cockroachPigData: cockroachPigResults,
         predictionsData: {
           isRowColTwoOrThreeFound: isColRowTwoOrThreeFound
             ? isColRowTwoFound || isColRowThreeFound
@@ -455,6 +574,7 @@ exports.undoGameResults = async (req, res) => {
             ? isColRowTwoFound || isColRowThreeFound
             : null,
           isSmallRoadHasData: isSmallRoadHasData,
+          isCockroachPigHasData: isCockroachPigHasData,
           bigEyeBoy: {
             banker: bigEyeBoyPrediction("Banker"),
             player: bigEyeBoyPrediction("Player"),
@@ -462,6 +582,10 @@ exports.undoGameResults = async (req, res) => {
           smallRoad: {
             banker: smallRoadPredictionLogic("Banker"),
             player: smallRoadPredictionLogic("Player"),
+          },
+          cockroachPig: {
+            banker: cockroachPigLogic("Banker"),
+            player: cockroachPigLogic("Player"),
           },
         },
       });
@@ -1055,7 +1179,7 @@ exports.secondaryAddGameResults = async (req, res) => {
     "SELECT bigEyeBoy_resultName as `name`, bigEyeBoy_numPosCol as `column`, bigEyeBoy_numPosRow as `row` FROM tb_results WHERE result_name != 'Tie' AND bigEyeBoy_resultName != ''";
 
   const queryGetThreeLatestColResults =
-    "SELECT result_name, result_count FROM tb_results WHERE result_name != 'Tie' order by result_count desc LIMIT 4";
+    "SELECT result_name, result_count FROM tb_results WHERE result_name != 'Tie' order by result_count desc LIMIT 5";
 
   const queryGetTwoLatestResults =
     "SELECT * FROM tb_results WHERE result_name != 'Tie' order by results_id desc LIMIT 2";
@@ -1105,6 +1229,9 @@ exports.secondaryAddGameResults = async (req, res) => {
   const queryGetTwoLatestGroupCountFromSmallRoad =
     "SELECT results_id, sr_name, sr_col, sr_row FROM tb_results WHERE result_name != 'Tie' AND sr_name != '' AND sr_col != '' AND sr_row != '' order by results_id desc LIMIT 2";
 
+  const queryGetTwoLatestGroupCountFromCockroachPig =
+    "SELECT results_id, cp_name, cp_col, cp_row FROM tb_results WHERE result_name != 'Tie' AND cp_name != '' AND cp_col != '' AND cp_row != '' order by results_id desc LIMIT 2";
+
   try {
     const findBigEyeBoyResultsUsingRowColToLatest = await databaseQuery(
       queryFindResultsUsingRowToLatest
@@ -1145,6 +1272,7 @@ exports.secondaryAddGameResults = async (req, res) => {
     const secondLatestColResults = threeLatestResults[1];
     const thirdLatestColResults = threeLatestResults[2];
     const fourthLatestColResults = threeLatestResults[3];
+    const fifthLatestColResults = threeLatestResults[4];
 
     const firstAllColumnDataFromResults = await databaseQuery(
       queryGetAllColumnDataFromResults,
@@ -1164,6 +1292,11 @@ exports.secondaryAddGameResults = async (req, res) => {
     const fourthAllColumnDataFromResults = await databaseQuery(
       queryGetAllColumnDataFromResults,
       [fourthLatestColResults?.result_count]
+    );
+
+    const fiftAllColumnDataFromResults = await databaseQuery(
+      queryGetAllColumnDataFromResults,
+      [fifthLatestColResults?.result_count]
     );
 
     const getLatestBigEyeBoyResultCount = await databaseQuery(
@@ -1231,6 +1364,7 @@ exports.secondaryAddGameResults = async (req, res) => {
     const secondColumnLength = secondAllColumnDataFromResults.length;
     const thirdColumnLength = thirdAllColumnDataFromResults.length;
     const fourthColumnLength = fourthAllColumnDataFromResults.length;
+    const fifthColumnlength = fiftAllColumnDataFromResults.length;
 
     const isCurrentResultsBlue = latestResults?.result_name == "Player";
     const isCurrentResultsRed = latestResults?.result_name == "Banker";
@@ -1615,7 +1749,7 @@ exports.secondaryAddGameResults = async (req, res) => {
           res.sr_col == smallRoadPrevCol && res.sr_row == smallRoadPrevRow + 1
       );
 
-      const isColRowWithNameTaken = allLatestSmallRoadResults.find(
+      const isColRowWithNameTaken = allLatestSmallRoadResults.some(
         (res) =>
           res.sr_col + 1 == smallRoadPrevCol &&
           res.sr_row == smallRoadPrevRow + 1 &&
@@ -1690,8 +1824,8 @@ exports.secondaryAddGameResults = async (req, res) => {
       findColFourRowOne.length > 0 || findColThreeRowTwo.length > 0;
 
     if (
-      isFirstColRowResultsFound ||
-      (isSmallRoadData && isLatestResultsNotTie)
+      (isSmallRoadData || isFirstColRowResultsFound) &&
+      isLatestResultsNotTie
     ) {
       if (firstColumnLength < thirdColumnLength) {
         if (bigRoadPrevRow < 2 && firstColumnLength < 2) {
@@ -1771,7 +1905,10 @@ exports.secondaryAddGameResults = async (req, res) => {
                 smallRoadRedIncrementColumn
               );
             } else {
-              if (isFirstAndSecondRowResultsEqual) {
+              if (
+                isFirstAndSecondRowResultsEqual ||
+                isColRowSmallRoadResultsTaken("Red")
+              ) {
                 await databaseQuery(
                   queryUpdateSmallRoadResults,
                   smallRoadRedIncrementColumn
@@ -1850,7 +1987,10 @@ exports.secondaryAddGameResults = async (req, res) => {
                     smallRoadRedIncrementColumn
                   );
                 } else {
-                  if (isFirstAndSecondRowResultsEqual) {
+                  if (
+                    isFirstAndSecondRowResultsEqual ||
+                    isColRowSmallRoadResultsTaken("Blue")
+                  ) {
                     await databaseQuery(
                       queryUpdateSmallRoadResults,
                       smallRoadRedIncrementColumn
@@ -1914,10 +2054,17 @@ exports.secondaryAddGameResults = async (req, res) => {
                 smallRoadRedIncrementColumn
               );
             } else {
-              await databaseQuery(
-                queryUpdateSmallRoadResults,
-                smallRoadRedIncrementRow
-              );
+              if (isColRowSmallRoadResultsTaken("Red")) {
+                await databaseQuery(
+                  queryUpdateSmallRoadResults,
+                  smallRoadRedIncrementColumn
+                );
+              } else {
+                await databaseQuery(
+                  queryUpdateSmallRoadResults,
+                  smallRoadRedIncrementRow
+                );
+              }
             }
           }
         }
@@ -1997,8 +2144,17 @@ exports.secondaryAddGameResults = async (req, res) => {
       queryGetCockroachRoadResults
     );
 
+    const getTwoLatestGroupCountFromCockroachPig = await databaseQuery(
+      queryGetTwoLatestGroupCountFromCockroachPig
+    );
+
+    const cpFirstLatestResults = getTwoLatestGroupCountFromCockroachPig[0];
+    const cpSecondLatestResults = getTwoLatestGroupCountFromCockroachPig[1];
+    const isFirstAndSecondResultsNameAndRowEqualFromCockroachPig =
+      cpFirstLatestResults?.cp_row == cpSecondLatestResults?.cp_row &&
+      cpFirstLatestResults?.cp_name == cpSecondLatestResults?.cp_name;
+
     const isCockroachPigDataFound = getAllCockroachPigResults.length > 0;
-    console.log(getAllCockroachPigResults);
 
     const getLatestResultsFromCockroachPig = await databaseQuery(
       queryGetLatestResultsFromCockroachPig
@@ -2018,7 +2174,7 @@ exports.secondaryAddGameResults = async (req, res) => {
     const cpIncrementRow = cpLatestRow + 1;
 
     const cpIsPrevResultsNotEqualToOne =
-      cpLatestCol != 1 ? cpIncrementGroupCount : cpIncrementCol;
+      cpLatestRow != 1 ? cpIncrementGroupCount : cpIncrementCol;
     // console.log("cpIncrementGroupCount: ", cpIncrementGroupCount);
     // console.log("cpLatestName: ", cpLatestName);
     // console.log("cpLatestCol: ", cpLatestCol);
@@ -2042,7 +2198,7 @@ exports.secondaryAddGameResults = async (req, res) => {
         (res) => res.cp_col == cpLatestCol && res.cp_row == cpLatestRow + 1
       );
 
-      const isColRowWithNameTaken = allLatestSmallRoadResults.find(
+      const isColRowWithNameTaken = allLatestSmallRoadResults.some(
         (res) =>
           res.cp_col + 1 == cpLatestRow &&
           res.cp_row == cpLatestRow + 1 &&
@@ -2068,10 +2224,24 @@ exports.secondaryAddGameResults = async (req, res) => {
       latestResults?.results_id,
     ];
 
-    console.log(!latestGroupCountFromCockroachPig);
+    const cpBlueIncrementColumn = [
+      "Blue",
+      isCockroachPigDataFound ? 0 : 1, // cp_groupCount,
+      isCockroachPigDataFound ? cpIncrementCol : 1,
+      isCockroachPigDataFound ? cpLatestRow : 1,
+      latestResults?.results_id,
+    ];
 
     const cpRedIncrementRow = [
       "Red",
+      !latestGroupCountFromCockroachPig ? 1 : 0, // cp_groupCount
+      isCockroachPigDataFound ? cpLatestCol : 1, // cp_col
+      isCockroachPigDataFound ? cpIncrementRow : 1, // cp_row
+      latestResults?.results_id, // results_id
+    ];
+
+    const cpBlueIncrementRow = [
+      "Blue",
       !latestGroupCountFromCockroachPig ? 1 : 0, // cp_groupCount
       isCockroachPigDataFound ? cpLatestCol : 1, // cp_col
       isCockroachPigDataFound ? cpIncrementRow : 1, // cp_row
@@ -2086,29 +2256,84 @@ exports.secondaryAddGameResults = async (req, res) => {
       latestResults?.results_id,
     ];
 
+    // console.log("First column: ", firstColumnLength);
+    // console.log("Fourth column: ", fourthColumnLength);
+
     if (
-      isCockroachPigHasData ||
-      (isFirstColRowResultsOnCockroachPigFound && isLatestResultsNotTie)
+      (isCockroachPigHasData || isFirstColRowResultsOnCockroachPigFound) &&
+      isLatestResultsNotTie
     ) {
       if (firstColumnLength < fourthColumnLength) {
         if (bigRoadPrevRow < 2 && firstColumnLength < 2) {
-          if (cpLatestName == "Red") {
-            await databaseQuery(
-              queryUpdateCockroachPigResults,
-              cpRedIncrementRow
-            );
+          if (secondColumnLength != fifthColumnlength) {
+            if (cpLatestName == "Blue") {
+              if (isColRowCockroachPigResultsTaken("Blue")) {
+                await databaseQuery(
+                  queryUpdateCockroachPigResults,
+                  cpBlueIncrementColumn
+                );
+              } else {
+                await databaseQuery(
+                  queryUpdateCockroachPigResults,
+                  cpBlueIncrementRow
+                );
+              }
+            } else {
+              await databaseQuery(
+                queryUpdateCockroachPigResults,
+                cpBlueResetColumn
+              );
+            }
           } else {
-            await databaseQuery(
-              queryUpdateCockroachPigResults,
-              cpRedResetColumn
-            );
+            if (cpLatestName == "Red") {
+              if (cpLatestRow > 5) {
+                await databaseQuery(
+                  queryUpdateCockroachPigResults,
+                  cpRedIncrementColumn
+                );
+              } else {
+                if (
+                  isColRowCockroachPigResultsTaken("Red") ||
+                  isFirstAndSecondResultsNameAndRowEqualFromCockroachPig
+                ) {
+                  await databaseQuery(
+                    queryUpdateCockroachPigResults,
+                    cpRedIncrementColumn
+                  );
+                } else {
+                  await databaseQuery(
+                    queryUpdateCockroachPigResults,
+                    cpRedIncrementRow
+                  );
+                }
+              }
+            } else {
+              await databaseQuery(
+                queryUpdateCockroachPigResults,
+                cpRedResetColumn
+              );
+            }
           }
         } else if (bigRoadPrevRow < 3 && firstColumnLength < 3) {
           if (cpLatestName == "Red") {
-            await databaseQuery(
-              queryUpdateCockroachPigResults,
-              cpRedIncrementRow
-            );
+            if (cpLatestRow > 5) {
+              await databaseQuery(
+                queryUpdateCockroachPigResults,
+                cpRedIncrementColumn
+              );
+            } else {
+              if (isFirstAndSecondResultsNameAndRowEqualFromCockroachPig) {
+                await databaseQuery(
+                  queryUpdateCockroachPigResults,
+                  cpRedIncrementColumn
+                );
+              } else {
+                await databaseQuery(
+                  queryUpdateCockroachPigResults,
+                  cpRedIncrementRow
+                );
+              }
+            }
           } else {
             await databaseQuery(
               queryUpdateCockroachPigResults,
@@ -2122,43 +2347,142 @@ exports.secondaryAddGameResults = async (req, res) => {
               cpRedResetColumn
             );
           } else {
-            await databaseQuery(
-              queryUpdateCockroachPigResults,
-              cpRedIncrementRow
-            );
+            if (
+              isColRowCockroachPigResultsTaken("Red") ||
+              isFirstAndSecondResultsNameAndRowEqualFromCockroachPig
+            ) {
+              await databaseQuery(
+                queryUpdateCockroachPigResults,
+                cpRedIncrementColumn
+              );
+            } else {
+              if (cpLatestRow > 5) {
+                await databaseQuery(
+                  queryUpdateCockroachPigResults,
+                  cpRedIncrementColumn
+                );
+              } else {
+                await databaseQuery(
+                  queryUpdateCockroachPigResults,
+                  cpRedIncrementRow
+                );
+              }
+            }
           }
         }
       } else if (firstColumnLength == fourthColumnLength) {
-        if (cpLatestName == "Red") {
-          await databaseQuery(
-            queryUpdateCockroachPigResults,
-            cpRedIncrementRow
-          );
-        } else {
-          await databaseQuery(queryUpdateCockroachPigResults, cpRedResetColumn);
-        }
-      } else if (firstColumnLength - 1 == fourthColumnLength) {
-        if (cpLatestName == "Red") {
-          await databaseQuery(
-            queryUpdateCockroachPigResults,
-            cpBlueResetColumn
-          );
-        }
-      } else if (firstColumnLength > fourthColumnLength) {
-        console.log(cpLatestRow);
-        if (cpLatestName == "Blue") {
-          await databaseQuery(queryUpdateCockroachPigResults, cpRedResetColumn);
-        } else {
+        if (bigRoadPrevRow < 2 && firstColumnLength < 2) {
+          if (cpLatestName == "Red") {
+            if (cpLatestRow > 5) {
+              await databaseQuery(
+                queryUpdateCockroachPigResults,
+                cpRedIncrementColumn
+              );
+            } else {
+              if (
+                isColRowCockroachPigResultsTaken("Red") ||
+                isFirstAndSecondResultsNameAndRowEqualFromCockroachPig
+              ) {
+                await databaseQuery(
+                  queryUpdateCockroachPigResults,
+                  cpRedIncrementColumn
+                );
+              } else {
+                await databaseQuery(
+                  queryUpdateCockroachPigResults,
+                  cpRedIncrementRow
+                );
+              }
+            }
+          } else {
+            await databaseQuery(
+              queryUpdateCockroachPigResults,
+              cpRedResetColumn
+            );
+          }
+        } else if (bigRoadPrevRow < 3 && firstColumnLength < 3) {
+          if (cpLatestName == "Red") {
+            if (cpLatestRow > 5) {
+              await databaseQuery(
+                queryUpdateCockroachPigResults,
+                cpRedIncrementColumn
+              );
+            } else {
+              await databaseQuery(
+                queryUpdateCockroachPigResults,
+                cpRedIncrementRow
+              );
+            }
+          } else {
+            await databaseQuery(
+              queryUpdateCockroachPigResults,
+              cpRedResetColumn
+            );
+          }
+        } else if (cpLatestName == "Red") {
           if (cpLatestRow > 5) {
             await databaseQuery(
               queryUpdateCockroachPigResults,
               cpRedIncrementColumn
             );
           } else {
+            if (
+              isColRowCockroachPigResultsTaken("Red") ||
+              isFirstAndSecondResultsNameAndRowEqualFromCockroachPig
+            ) {
+              await databaseQuery(
+                queryUpdateCockroachPigResults,
+                cpRedIncrementColumn
+              );
+            } else {
+              await databaseQuery(
+                queryUpdateCockroachPigResults,
+                cpRedIncrementRow
+              );
+            }
+          }
+        } else {
+          await databaseQuery(
+            queryUpdateCockroachPigResults,
+            cpBlueResetColumn
+          );
+        }
+      } else if (firstColumnLength - 1 == fourthColumnLength) {
+        if (cpLatestName == "Blue") {
+          await databaseQuery(
+            queryUpdateCockroachPigResults,
+            cpBlueIncrementRow
+          );
+        } else {
+          await databaseQuery(
+            queryUpdateCockroachPigResults,
+            cpBlueResetColumn
+          );
+        }
+      } else if (firstColumnLength > fourthColumnLength) {
+        if (cpLatestName == "Blue") {
+          await databaseQuery(queryUpdateCockroachPigResults, cpRedResetColumn);
+        } else {
+          if (
+            cpLatestRow > 5 ||
+            isFirstAndSecondResultsNameAndRowEqualFromCockroachPig
+          ) {
             await databaseQuery(
               queryUpdateCockroachPigResults,
-              cpRedIncrementRow
+              cpRedIncrementColumn
             );
+          } else {
+            if (isColRowCockroachPigResultsTaken("Red")) {
+              await databaseQuery(
+                queryUpdateCockroachPigResults,
+                cpRedIncrementColumn
+              );
+            } else {
+              await databaseQuery(
+                queryUpdateCockroachPigResults,
+                cpRedIncrementRow
+              );
+            }
           }
         }
       }
@@ -2245,6 +2569,46 @@ exports.secondaryAddGameResults = async (req, res) => {
       }
     }
 
+    function cockroachPigLogic(leadName) {
+      if (leadName == "Banker") {
+        if (isCurrentResultsBlue) {
+          if (firstColumnLength == fourthColumnLength) {
+            return "Red";
+          } else if (firstColumnLength > fourthColumnLength) {
+            return "Blue";
+          } else {
+            return "Blue";
+          }
+        } else {
+          if (firstColumnLength == fourthColumnLength) {
+            return "Blue";
+          } else if (firstColumnLength > fourthColumnLength) {
+            return "Red";
+          } else {
+            return "Red";
+          }
+        }
+      } else if (leadName == "Player") {
+        if (isCurrentResultsRed) {
+          if (firstColumnLength == fourthColumnLength) {
+            return "Red";
+          } else if (firstColumnLength > fourthColumnLength) {
+            return "Blue";
+          } else {
+            return "Blue";
+          }
+        } else {
+          if (firstColumnLength == fourthColumnLength) {
+            return "Blue";
+          } else if (firstColumnLength > fourthColumnLength) {
+            return "Red";
+          } else {
+            return "Red";
+          }
+        }
+      }
+    }
+
     const data = {
       bigEyeBoyData: resultsData,
       smallRoadData: smallRoadResults,
@@ -2253,6 +2617,7 @@ exports.secondaryAddGameResults = async (req, res) => {
         isRowColTwoOrThreeFound: isColRowTwoFound || isColRowThreeFound,
         isBigEyeBoyHasData: isColRowTwoFound || isColRowThreeFound,
         isSmallRoadHasData: isSmallRoadData,
+        isCockroachPigHasData: isCockroachPigHasData,
         bigEyeBoy: {
           banker: bigEyeBoyPrediction("Banker"),
           player: bigEyeBoyPrediction("Player"),
@@ -2260,6 +2625,10 @@ exports.secondaryAddGameResults = async (req, res) => {
         smallRoad: {
           banker: smallRoadPredictionLogic("Banker"),
           player: smallRoadPredictionLogic("Player"),
+        },
+        cockroachPig: {
+          banker: cockroachPigLogic("Banker"),
+          player: cockroachPigLogic("Player"),
         },
       },
     };

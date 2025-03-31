@@ -69,7 +69,7 @@ function App() {
             result_name: "Banker",
           })
           const responseRoadsData = await fetchAddDetailGameResults();
-          console.log(responseRoadsData)
+          // console.log(responseRoadsData)
           setPredictionsData(responseRoadsData?.predictionsData)
           setResultBigEyeBoyData(responseRoadsData.bigEyeBoyData)
           setResultSmallRoadData(responseRoadsData.smallRoadData)
@@ -86,7 +86,7 @@ function App() {
           setPredictionsData(responseFromBigEyeBoyData?.predictionsData)
           setResultBigEyeBoyData(responseFromBigEyeBoyData.bigEyeBoyData)
           setResultSmallRoadData(responseFromBigEyeBoyData.smallRoadData)
-          setResultsCockroachPigData(responseRoadsData.cockroachPigData)
+          setResultsCockroachPigData(responseFromBigEyeBoyData.cockroachPigData)
           setResultsBoardData(response.bigRoadData);
           setResultsBoardMarkerData(response.markerRoadData)
           setRound(response.markerRoadData.length)
@@ -95,13 +95,12 @@ function App() {
         } else if (keySequence == 4) {
           const response = await fetchDeleteLatestGameResults();
           setPredictionsData(response?.predictionsData);
-          setResultBigEyeBoyData(response.bigEyeBoyData)
+          setResultBigEyeBoyData(response.bigEyeBoyData);
           setResultsBoardData(response.bigRoadData);
           setResultsBoardMarkerData(response.markerRoadData)
           setResultSmallRoadData(response.smallRoadData)
           setResultsCockroachPigData(response.cockroachPigData)
           setRound(response.markerRoadData.length)
-
         }
         keySequence = ''
       }
@@ -239,7 +238,7 @@ function App() {
     const handleFetchGameResults = async () => {
       try {
         const response = await fetchGetResults();
-        console.log(response)
+        // console.log(response)
         setResultBigEyeBoyData(response.bigEyeBoyData)
         setResultsBoardData(response.bigRoadData);
         setResultsBoardMarkerData(response.markerRoadData);
