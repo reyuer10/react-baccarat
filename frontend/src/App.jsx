@@ -22,6 +22,7 @@ import BigEyeBoy from './components/BigEyeBoy'
 import SmallRoad from './components/SmallRoad'
 import CockroachPig from './components/CockroachPig'
 import Predictions from './components/Predictions'
+import CardBoardResults from './components/CardBoardResults'
 
 function App() {
   let keySequence = ''
@@ -29,7 +30,7 @@ function App() {
 
   const [boardData, setBoardData] = useState({
     bigRoad: generateBigRoadData(40),
-    markerRoad: generateMarkerRoadData(40),
+    markerRoad: generateMarkerRoadData(20),
     bigEyeBoy: generateBigEyeBoyData(60),
     smallRoad: generateSmallRoadData(30),
     cockroachPig: generateCockroachPigData(30)
@@ -254,15 +255,36 @@ function App() {
 
   }, [])
 
-
-
-
   return (
     <div className='h-screen bg-[#282828] grid grid-cols-24 p-4 gap-2 '>
-      <div className=' col-span-24 row-span-1 mx-auto'>
+      <div className=' col-span-24 row-span-1'>
         <Header
           handleFetchResetGameResults={handleFetchResetGameResults}
           round={round}
+        />
+      </div>
+      <div className='max-[1600px]:hidden col-span-12 row-span-6 font-bold flex roboto-mono-900 relative bg-[#fff0cd] overflow-x-hidden'>
+        <div className='absolute opacity-20 z-10 flex justify-center items-center h-full w-full'>
+          <p className=' text-[100px] tracking-wider'>MARKER ROAD</p>
+        </div>
+        <div className='flex z-20 w-full'>
+          {boardData.markerRoad.map((m, index) => {
+            return (
+              <MarkerRoad
+                m={m}
+                key={index}
+                resultBoardMarkerData={resultBoardMarkerData}
+              />
+            )
+          })}
+        </div>
+      </div>
+      <div className='max-[1600px]:hidden col-span-10 row-span-6 font-bold roboto-mono-900 relative bg-[#fff0cd] overflow-x-hidden'>
+        <CardBoardResults round={round} />
+      </div>
+      <div className='max-[1600px]:hidden col-span-2 row-span-6 bg-[#fff0cd] flex justify-center flex-col items-center'>
+        <Predictions
+          predictionsData={predictionsData}
         />
       </div>
       <div className='max-[1600px]:hidden col-span-24 row-span-6 font-bold flex roboto-mono-900 relative bg-[#fff0cd] overflow-x-hidden'>
@@ -317,27 +339,7 @@ function App() {
           })}
         </div>
       </div>
-      <div className='max-[1600px]:hidden col-span-22 row-span-6 font-bold flex roboto-mono-900 relative bg-[#fff0cd] overflow-x-hidden'>
-        <div className='absolute opacity-20 z-10 flex justify-center items-center h-full w-full'>
-          <p className=' text-[100px] tracking-wider'>MARKER ROAD</p>
-        </div>
-        <div className='flex z-20 w-full'>
-          {boardData.markerRoad.map((m, index) => {
-            return (
-              <MarkerRoad
-                m={m}
-                key={index}
-                resultBoardMarkerData={resultBoardMarkerData}
-              />
-            )
-          })}
-        </div>
-      </div>
-      <div className='max-[1600px]:hidden col-span-2 row-span-6 bg-[#fff0cd] flex justify-center flex-col items-center'>
-        <Predictions
-          predictionsData={predictionsData}
-        />
-      </div>
+
     </div>
   )
 }

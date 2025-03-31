@@ -36,7 +36,7 @@ function Predictions({ predictionsData }) {
                 return `ring-${colorName} bg-${colorName}`
             }
         } else {
-            return `opacity-20 bg-gray-400 ring-gray-400`
+            return `opacity-40 bg-gray-400 ring-gray-400`
         }
     }
 
@@ -54,15 +54,13 @@ function Predictions({ predictionsData }) {
 
                     const styleConvertCockroachPigBanker = cockroachPig?.banker == "Blue" ? "cyan-600" : "red-500"
                     const styleConvertCockroachPigPlayer = cockroachPig?.player == "Blue" ? "cyan-600" : "red-500"
-                    // isCockroachPigHasData
-
+                    // ${isRowColTwoOrThreeFound ? "" : "opacity-40"}
                     return (
                         <div
-                            className={` flex space-x-4 transition-all
-                                ${isRowColTwoOrThreeFound ? "" : "opacity-40"}`}
+                            className={`flex space-x-4 transition-all`}
                             key={index}>
                             <div className='space-y-4 flex flex-col items-center'>
-                                <p className={`${isRowColTwoOrThreeFound ? "bg-red-500" : "bg-gray-400"} text-2xl text-white result-text-shadow border-4 border-white ring-2 ring-red-500 px-[10px] rounded-full`}>
+                                <p className={`bg-red-500 text-2xl text-white result-text-shadow border-4 border-white ring-2 ring-red-500 px-[10px] rounded-full`}>
                                     {p.predictionBanker}
                                 </p>
 
@@ -74,7 +72,7 @@ function Predictions({ predictionsData }) {
 
 
                                 <p className={`h-[35px] w-[35px] rounded-full
-                                ${isSmallRoadHasData ? `bg-${styleConvertSmallRoadBanker}` : "bg-gray-400"}`}
+                                ${isSmallRoadHasData ? `bg-${styleConvertSmallRoadBanker}` : "opacity-40 bg-gray-400"}`}
                                 >
                                     {p.predictionSmallRoadFromBanker}
                                 </p>
@@ -82,7 +80,7 @@ function Predictions({ predictionsData }) {
 
 
                                 <p className={`h-[35px] w-[10px] mx-auto rotate-45
-                                ${isCockroachPigHasData ? `bg-${styleConvertCockroachPigBanker}` : "bg-gray-400"}
+                                ${isCockroachPigHasData ? `bg-${styleConvertCockroachPigBanker}` : "opacity-40 bg-gray-400"}
                                 `}
                                 >
                                     {p.predictionCockroachPigFromBanker}
@@ -93,22 +91,22 @@ function Predictions({ predictionsData }) {
 
 
                             <div className='space-y-4 flex flex-col items-center'>
-                                <p className={`${isRowColTwoOrThreeFound ? "bg-cyan-600" : " bg-gray-400"} text-2xl text-white result-text-shadow border-4 border-white ring-2 ring-cyan-600 px-[10px] rounded-full`}>
+                                <p className={`bg-cyan-600 text-2xl text-white result-text-shadow border-4 border-white ring-2 ring-cyan-600 px-[10px] rounded-full`}>
                                     {p.predictionPlayer}
                                 </p>
 
                                 <p className={`h-[35px] w-[35px] rounded-full border-6 border-white ring-2
-                                ${isBigEyeBoyHasData ? `ring-${styleConvertBigEyeBoyPlayer}` : "opacity-20 bg-gray-400  ring-gray-400"}
+                                ${isBigEyeBoyHasData ? `ring-${styleConvertBigEyeBoyPlayer}` : " opacity-40 bg-gray-400  ring-gray-400"}
                                    ${bigEyeBoy?.player == null ? "" : `bg-${styleConvertBigEyeBoyPlayer}`}
                                 `}
                                 ></p>
                                 <p className={`h-[35px] w-[35px] rounded-full
-                                ${isSmallRoadHasData ? `bg-${styleConvertSmallRoadPlayer}` : "bg-gray-400"}`}
+                                ${isSmallRoadHasData ? `bg-${styleConvertSmallRoadPlayer}` : "opacity-40 bg-gray-400"}`}
                                 >
                                     {p.predictionSmallRoadFromPlayer}
                                 </p>
                                 <p className={`h-[35px] w-[10px] mx-auto rotate-45
-                                  ${isCockroachPigHasData ? `bg-${styleConvertCockroachPigPlayer}` : "bg-gray-400"}
+                                  ${isCockroachPigHasData ? `bg-${styleConvertCockroachPigPlayer}` : "opacity-40 bg-gray-400"}
                                 `}
                                 >
                                     {p.predictionCockroachPigFromPlayer}

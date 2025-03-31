@@ -450,11 +450,6 @@ export const generateBigRoadData = (columm) => {
 export const generateMarkerRoadData = (numColumn) => {
   const columns = [];
   let counterId = 1;
-  // colId: 6,
-  //       columnPosition: 1,
-  //       rowPosition: 6,
-  //       columnCount: false,
-
   for (let i = 1; i <= numColumn; i++) {
     let columnData = [];
     for (let row = 1; row <= 6; row++) {
