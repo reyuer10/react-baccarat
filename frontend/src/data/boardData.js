@@ -426,11 +426,14 @@ export const markerRoad = [
   },
 ];
 
-export const generateBigRoadData = (columm) => {
+export const generateBigRoadData = (columm, index) => {
   const columns = [];
   let counterId = 1;
 
-  for (let i = 1; i <= columm; i++) {
+  const initialIndex = !index ? 1 : index;
+  console.log(index)
+
+  for (let i = initialIndex; i <= columm; i++) {
     let columnData = [];
     for (let row = 1; row <= 6; row++) {
       columnData.push({
@@ -451,7 +454,6 @@ export const generateMarkerRoadData = (numColumn, numIndex) => {
   const columns = [];
   let counterId = 1;
 
-  console.log(numColumn)
 
   const initialIndex = !numIndex ? 1 : numIndex;
   for (let i = initialIndex; i <= numColumn; i++) {

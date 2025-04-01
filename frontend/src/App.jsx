@@ -45,7 +45,7 @@ function App() {
   const markerRoadCurrentLength = Math.ceil(resultBoardMarkerData.length / 6)
 
   const [boardData, setBoardData] = useState({
-    bigRoad: generateBigRoadData(40),
+    bigRoad: generateBigRoadData(40, 1),
     markerRoad: generateMarkerRoadData(20, null),
     bigEyeBoy: generateBigEyeBoyData(60),
     smallRoad: generateSmallRoadData(30),
@@ -60,8 +60,9 @@ function App() {
           const response = await fetchAddResults({
             result_name: "Player",
           })
-
           const responseRoadsData = await fetchAddDetailGameResults();
+          console.log(response)
+
           setPredictionsData(responseRoadsData?.predictionsData)
           setResultBigEyeBoyData(responseRoadsData.bigEyeBoyData)
           setResultSmallRoadData(responseRoadsData.smallRoadData)
@@ -70,16 +71,11 @@ function App() {
           setResultsBoardMarkerData(response.markerRoadData);
           setRound(response.markerRoadData.length)
 
+          setBoardData((prevBoardData) => ({
+            ...prevBoardData,
+            bigRoad: generateBigRoadData(response?.bigRoadSettings?.latestCol, response?.bigRoadSettings?.indexStart)
+          }))
 
-          // console.log("markerRoadCurrentLength: ", markerRoadCurrentLength)
-          // console.log("boardData.markerRoad.length: ", boardData.markerRoad.length)
-          // console.log(markerRoadCurrentLength)
-          // if (markerRoadCurrentLength > boardData.markerRoad.length) {
-          //   setBoardData((prevBoardData) => ({
-          //     ...prevBoardData,
-          //     markerRoad: generateMarkerRoadData(prevBoardData.markerRoad.length + 1, markerRoadCurrentLength - markerRoadStandardColNum)
-          //   }))
-          // }
 
 
         } else if (keySequence == 2) {
@@ -87,7 +83,7 @@ function App() {
             result_name: "Banker",
           })
           const responseRoadsData = await fetchAddDetailGameResults();
-          // console.log(responseRoadsData)
+          console.log(response)
           setPredictionsData(responseRoadsData?.predictionsData)
           setResultBigEyeBoyData(responseRoadsData.bigEyeBoyData)
           setResultSmallRoadData(responseRoadsData.smallRoadData)
@@ -96,11 +92,18 @@ function App() {
           setResultsBoardMarkerData(response.markerRoadData)
           setRound(response.markerRoadData.length)
 
+
+          setBoardData((prevBoardData) => ({
+            ...prevBoardData,
+            bigRoad: generateBigRoadData(response?.bigRoadSettings?.latestCol, response?.bigRoadSettings?.indexStart)
+          }))
+
         } else if (keySequence == 3) {
           const response = await fetchAddResults({
             result_name: "Tie",
           })
           const responseFromBigEyeBoyData = await fetchAddDetailGameResults();
+          console.log(response)
           setPredictionsData(responseFromBigEyeBoyData?.predictionsData)
           setResultBigEyeBoyData(responseFromBigEyeBoyData.bigEyeBoyData)
           setResultSmallRoadData(responseFromBigEyeBoyData.smallRoadData)
@@ -272,22 +275,6 @@ function App() {
 
   }, []);
 
-  useEffect(() => {
-    console.log("markerRoadCurrentLength: ", markerRoadCurrentLength)
-    console.log("boardData.markerRoad.length: ", boardData.markerRoad.length)
-    console.log("markerRoadCurrentLength - markerRoadStandardColNum: ", markerRoadCurrentLength - markerRoadStandardColNum)
-
-    if (markerRoadCurrentLength > boardData.markerRoad.length) {
-      setBoardData((prevBoardData) => ({
-        ...prevBoardData,
-        markerRoad: generateMarkerRoadData(markerRoadCurrentLength, markerRoadCurrentLength - markerRoadStandardColNum)
-      }))
-    }
-
-
-
-  }, [resultBoardMarkerData])
-
 
   return (
     <div className='h-screen bg-[#282828] grid grid-cols-24 p-4 gap-2 '>
@@ -328,12 +315,12 @@ function App() {
         <div className='flex z-20 w-full'>
           {boardData.bigRoad.map((b, index) => {
             return (
-              <BigRoad
-                key={index}
-                b={b}
-                resultsBoardData={resultsBoardData}
-              />
-            )
+          <BigRoad
+            key={index}
+            b={b}
+            resultsBoardData={resultsBoardData}
+          />
+          )
           })}
         </div>
       </div>

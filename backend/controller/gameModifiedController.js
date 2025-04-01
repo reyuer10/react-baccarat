@@ -630,10 +630,16 @@ exports.undoGameResults = async (req, res) => {
 
 exports.addGameResults = async (req, res) => {
   const queryGetResults = "SELECT * FROM tb_results";
+
+  const queryGetLatestResults =
+    "SELECT MIN(num_posCol) as minNum_posCol, MAX(num_posCol) as  minNum_posCol, MIN(bigEyeBoy_numPosCol) as minBB_numPosCol,  MAX(bigEyeBoy_numPosCol) as maxBB_numPosCol, MIN(sr_col) as minSr_col, MAX(sr_col) as maxSr_col, MIN(cp_col) as minCp_col, MAX(cp_col) as maxCp_col FROM tb_results LIMIT 1";
   const queryGetMarkerRoadResults =
     "SELECT results_id, result_name, num_posCol, num_PosRow FROM tb_results LIMIT 120 OFFSET ?";
   const queryGetResultsExceptTie =
     "SELECT * FROM tb_results WHERE result_name != 'Tie'";
+
+  const queryGetCustomizeBigRoadResults =
+    "SELECT * FROM tb_results WHERE result_name != 'Tie' AND num_posCol NOT BETWEEN ? AND ?";
 
   const queryFindSecondaryResult =
     "SELECT * FROM tb_results WHERE main_resultCol = 2 order by results_id desc LIMIT 1 ";
@@ -1180,9 +1186,30 @@ exports.addGameResults = async (req, res) => {
     const resultsQueryGetResultsExceptTie = await databaseQuery(
       queryGetResultsExceptTie
     );
+
+    const getLatestResults = await databaseQuery(queryGetLatestResults);
+    console.log(getLatestResults);
+
+    const latestResults = getLatestResults[0];
+    const maxBr_col = latestResults.minNum_posCol;
+
+    const getBigroadByCustomize = await databaseQuery(
+      queryGetCustomizeBigRoadResults,
+      [1, maxBr_col - 41]
+    );
+
+    const calcIndexStart = maxBr_col - 40;
     return res.status(OK).send({
-      bigRoadData: resultsQueryGetResultsExceptTie,
+      bigRoadData:
+        maxBr_col <= 40
+          ? resultsQueryGetResultsExceptTie
+          : getBigroadByCustomize,
+      customizeBigRoadData: getBigroadByCustomize,
       markerRoadData: resultsQueryGetResults,
+      bigRoadSettings: {
+        latestCol: maxBr_col <= 40 ? 40 : maxBr_col,
+        indexStart: calcIndexStart <= 0 ? 1 : calcIndexStart,
+      },
     });
   } catch (error) {
     return res.status(internalServer).send({
