@@ -2,7 +2,7 @@ import React from 'react'
 import { initialSmallRoadData } from '../utils/convertRoadResults'
 
 function SmallRoad({ sr, smallRoadData }) {
-    // console.log(smallRoadData)
+    
     return (
         <div className='w-full'>
             {Object.keys(sr).map(key => (

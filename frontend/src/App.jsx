@@ -27,14 +27,8 @@ import CardBoardResults from './components/CardBoardResults'
 function App() {
   let keySequence = ''
 
+  let markerRoadStandardColNum = 20;
 
-  const [boardData, setBoardData] = useState({
-    bigRoad: generateBigRoadData(40),
-    markerRoad: generateMarkerRoadData(20),
-    bigEyeBoy: generateBigEyeBoyData(60),
-    smallRoad: generateSmallRoadData(30),
-    cockroachPig: generateCockroachPigData(30)
-  })
 
   const [count, setCount] = useState(0);
 
@@ -47,6 +41,17 @@ function App() {
   const [predictionsData, setPredictionsData] = useState([])
 
   const [round, setRound] = useState(0)
+
+  const markerRoadCurrentLength = Math.ceil(resultBoardMarkerData.length / 6)
+
+  const [boardData, setBoardData] = useState({
+    bigRoad: generateBigRoadData(40),
+    markerRoad: generateMarkerRoadData(20, null),
+    bigEyeBoy: generateBigEyeBoyData(60),
+    smallRoad: generateSmallRoadData(30),
+    cockroachPig: generateCockroachPigData(30)
+  })
+
   const handleEnterKeyCode = async (e) => {
     let keyPress = e.key
     try {
@@ -64,6 +69,18 @@ function App() {
           setResultsBoardData(response.bigRoadData);
           setResultsBoardMarkerData(response.markerRoadData);
           setRound(response.markerRoadData.length)
+
+
+          // console.log("markerRoadCurrentLength: ", markerRoadCurrentLength)
+          // console.log("boardData.markerRoad.length: ", boardData.markerRoad.length)
+          // console.log(markerRoadCurrentLength)
+          // if (markerRoadCurrentLength > boardData.markerRoad.length) {
+          //   setBoardData((prevBoardData) => ({
+          //     ...prevBoardData,
+          //     markerRoad: generateMarkerRoadData(prevBoardData.markerRoad.length + 1, markerRoadCurrentLength - markerRoadStandardColNum)
+          //   }))
+          // }
+
 
         } else if (keySequence == 2) {
           const response = await fetchAddResults({
@@ -246,14 +263,31 @@ function App() {
         setPredictionsData(response.predictionsData)
         setResultSmallRoadData(response.smallRoadData)
         setResultsCockroachPigData(response.cockroachPigData)
-        setRound(response.markerRoadData.length)
+        setRound(response.markerRoadData.length);
       } catch (error) {
         console.log(error);
       }
     }
     handleFetchGameResults();
 
-  }, [])
+  }, []);
+
+  useEffect(() => {
+    console.log("markerRoadCurrentLength: ", markerRoadCurrentLength)
+    console.log("boardData.markerRoad.length: ", boardData.markerRoad.length)
+    console.log("markerRoadCurrentLength - markerRoadStandardColNum: ", markerRoadCurrentLength - markerRoadStandardColNum)
+
+    if (markerRoadCurrentLength > boardData.markerRoad.length) {
+      setBoardData((prevBoardData) => ({
+        ...prevBoardData,
+        markerRoad: generateMarkerRoadData(markerRoadCurrentLength, markerRoadCurrentLength - markerRoadStandardColNum)
+      }))
+    }
+
+
+
+  }, [resultBoardMarkerData])
+
 
   return (
     <div className='h-screen bg-[#282828] grid grid-cols-24 p-4 gap-2 '>

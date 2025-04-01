@@ -447,10 +447,14 @@ export const generateBigRoadData = (columm) => {
   return columns;
 };
 
-export const generateMarkerRoadData = (numColumn) => {
+export const generateMarkerRoadData = (numColumn, numIndex) => {
   const columns = [];
   let counterId = 1;
-  for (let i = 1; i <= numColumn; i++) {
+
+  console.log(numColumn)
+
+  const initialIndex = !numIndex ? 1 : numIndex;
+  for (let i = initialIndex; i <= numColumn; i++) {
     let columnData = [];
     for (let row = 1; row <= 6; row++) {
       columnData.push({

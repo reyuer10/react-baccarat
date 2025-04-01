@@ -24,10 +24,6 @@ function Predictions({ predictionsData }) {
             predictionCockroachPigFromBanker: null,
         }])
 
-
-    console.log(predictionsData)
-
-
     function customizeStyleBigEyeBoy(colorName) {
         if (isBigEyeBoyHasData) {
             if (bigEyeBoy?.banker == null) {

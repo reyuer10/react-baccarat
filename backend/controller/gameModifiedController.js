@@ -24,6 +24,10 @@ exports.newGameResults = async (req, res) => {
 
 exports.getGameResults = async (req, res) => {
   const queryGetBoardResults = "SELECT * FROM tb_results";
+
+  const queryGetMarkerRoadResults =
+    "SELECT results_id, result_name, num_posCol, num_PosRow FROM tb_results LIMIT 120 OFFSET ?";
+
   const queryGetResultsExceptTie =
     "SELECT * FROM tb_results WHERE result_name != 'Tie'";
   const queryGetAllBigEyeBoyResults =
@@ -69,7 +73,6 @@ exports.getGameResults = async (req, res) => {
     const fourthLatestColResults = threeLatestResults[3];
 
     const resultsData = await databaseQuery(queryGetAllBigEyeBoyResults);
-    const getBoardData = await databaseQuery(queryGetBoardResults);
     const getBoardDataExceptTie = await databaseQuery(queryGetResultsExceptTie);
 
     const firstAllColumnDataFromResults = await databaseQuery(
@@ -257,9 +260,21 @@ exports.getGameResults = async (req, res) => {
       }
     }
 
+    let markerRoadOffset = 0;
+    const markerRoadResults = await databaseQuery(queryGetBoardResults);
+
+    if (markerRoadResults.length > 117) {
+      markerRoadOffset = markerRoadResults.length - 117;
+    }
+
+    const resultsQueryGetResults = await databaseQuery(
+      queryGetMarkerRoadResults,
+      [markerRoadOffset]
+    );
+
     return res.status(OK).send({
       bigRoadData: getBoardDataExceptTie,
-      markerRoadData: getBoardData,
+      markerRoadData: resultsQueryGetResults,
       bigEyeBoyData: resultsData,
       smallRoadData: getLatestSmallRoadResults,
       cockroachPigData: getCockroachPigResults,
@@ -305,6 +320,10 @@ exports.undoGameResults = async (req, res) => {
     "DELETE FROM tb_results WHERE results_id = ?";
   const queryGetLatestResultsId =
     "SELECT results_id, result_name FROM tb_results order by results_id desc LIMIT 1";
+
+  const queryGetMarkerRoadResults =
+    "SELECT results_id, result_name, num_posCol, num_PosRow FROM tb_results LIMIT 120 OFFSET ?";
+
   const queryGetResults = "SELECT * FROM tb_results";
   const queryGetResultsExceptTie =
     "SELECT * FROM tb_results WHERE result_name != 'Tie'";
@@ -405,10 +424,10 @@ exports.undoGameResults = async (req, res) => {
       const thirdColumnLength = thirdAllColumnDataFromResults.length;
       const fourthColumnLength = fourthAllColumnDataFromResults.length;
 
-      console.log("First column: ", firstColumnLength);
-      console.log("Second column: ", secondColumnLength);
-      console.log("Third column: ", thirdColumnLength);
-      console.log("Fourth column: ", fourthColumnLength);
+      // console.log("First column: ", firstColumnLength);
+      // console.log("Second column: ", secondColumnLength);
+      // console.log("Third column: ", thirdColumnLength);
+      // console.log("Fourth column: ", fourthColumnLength);
 
       const isCurrentResultsBlue = latestResults?.result_name == "Player";
       const isCurrentResultsRed = latestResults?.result_name == "Banker";
@@ -430,7 +449,6 @@ exports.undoGameResults = async (req, res) => {
         queryGetAllBigEyeBoyResults
       );
 
-      const resultsQueryGetResults = await databaseQuery(queryGetResults);
       const resultsQueryGetResultsExceptTie = await databaseQuery(
         queryGetResultsExceptTie
       );
@@ -560,6 +578,18 @@ exports.undoGameResults = async (req, res) => {
       const isSmallRoadHasData = smallRoadResults.length > 0;
       const isCockroachPigHasData = cockroachPigResults.length > 0;
 
+      let markerRoadOffset = 0;
+      const markerRoadResults = await databaseQuery(queryGetResults);
+
+      if (markerRoadResults.length > 117) {
+        markerRoadOffset = markerRoadResults.length - 117;
+      }
+
+      const resultsQueryGetResults = await databaseQuery(
+        queryGetMarkerRoadResults,
+        [markerRoadOffset]
+      );
+
       return res.status(OK).send({
         bigRoadData: resultsQueryGetResultsExceptTie,
         bigEyeBoyData: getAllBigEyeBoyResults,
@@ -600,6 +630,8 @@ exports.undoGameResults = async (req, res) => {
 
 exports.addGameResults = async (req, res) => {
   const queryGetResults = "SELECT * FROM tb_results";
+  const queryGetMarkerRoadResults =
+    "SELECT results_id, result_name, num_posCol, num_PosRow FROM tb_results LIMIT 120 OFFSET ?";
   const queryGetResultsExceptTie =
     "SELECT * FROM tb_results WHERE result_name != 'Tie'";
 
@@ -655,9 +687,6 @@ exports.addGameResults = async (req, res) => {
 
     const resultsGetBoardData = await databaseQuery(queryGetResults);
     const isBoardDataEmpty = resultsGetBoardData.length == 0;
-    const findSecondColumnResults = resultsGetBoardData.find(
-      (results) => results.num_posCol == 2 && results.num_posRow == 2
-    );
 
     const isPrevResultMatchToCurrent =
       currentResults?.result_name == result_name;
@@ -1136,14 +1165,21 @@ exports.addGameResults = async (req, res) => {
         ]);
       }
     }
+    let markerRoadOffset = 0;
+    const markerRoadResults = await databaseQuery(queryGetResults);
 
-    const resultsQueryGetResults = await databaseQuery(queryGetResults);
+    if (markerRoadResults.length > 117) {
+      markerRoadOffset = markerRoadResults.length - 117;
+    }
+
+    const resultsQueryGetResults = await databaseQuery(
+      queryGetMarkerRoadResults,
+      [markerRoadOffset]
+    );
+
     const resultsQueryGetResultsExceptTie = await databaseQuery(
       queryGetResultsExceptTie
     );
-    // const getLatesResults = await databaseQuery(queryGetLatestResults);
-    // const queryResults = getLatesResults[0];
-
     return res.status(OK).send({
       bigRoadData: resultsQueryGetResultsExceptTie,
       markerRoadData: resultsQueryGetResults,

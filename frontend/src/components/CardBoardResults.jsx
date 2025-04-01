@@ -8,8 +8,8 @@ function CardBoardResults({ round }) {
                     {/* <p>Box 2</p> */}
                 </div>
                 <div className='h-[15%] border flex items-center justify-center space-x-4 bg-gradient-to-b from-blue-300 via-blue-700 to-blue-300'>
-                    <p className='text-xl px-[9px] rounded-full border text-white outline outline-white ring-3 bg-blue-500 ring-blue-500'>P</p>
-                    <p className='text-white text-3xl text-shadow-player'>PLAYER</p>
+                    <p className='text-lg px-[9px] rounded-full border text-white outline outline-white ring-3 bg-blue-500 ring-blue-500'>P</p>
+                    <p className='text-white text-2xl text-shadow-player'>PLAYER</p>
                     <p className='text-white text-2xl'>0</p>
                 </div>
             </div>
@@ -22,8 +22,8 @@ function CardBoardResults({ round }) {
                     {/* <p>Hello</p> */}
                 </div>
                 <div className='h-[15%] border flex items-center justify-center space-x-4 bg-gradient-to-b from-green-300 via-green-700 to-green-300'>
-                    <p className='text-xl px-[9px] rounded-full border text-white outline outline-white ring-3 bg-green-500 ring-green-500'>T</p>
-                    <p className='text-white text-3xl text-shadow-tie'>TIE</p>
+                    <p className='text-lg px-[9px] rounded-full border text-white outline outline-white ring-3 bg-green-500 ring-green-500'>T</p>
+                    <p className='text-white text-2xl text-shadow-tie'>TIE</p>
                     <p className='text-white text-2xl'>0</p>
                 </div>
             </div>
@@ -32,8 +32,8 @@ function CardBoardResults({ round }) {
                     {/* <p>Box 1</p> */}
                 </div>
                 <div className='h-[15%] border flex items-center justify-center space-x-4 bg-gradient-to-b from-red-300 via-red-700 to-red-300'>
-                    <p className='text-xl px-[9px] rounded-full border text-white outline outline-white ring-3 bg-red-500 ring-red-500'>B</p>
-                    <p className='text-white text-3xl text-shadow-banker'>BANKER</p>
+                    <p className='text-lg px-[9px] rounded-full border text-white outline outline-white ring-3 bg-red-500 ring-red-500'>B</p>
+                    <p className='text-white text-2xl text-shadow-banker'>BANKER</p>
                     <p className='text-white text-2xl'>0</p>
                 </div>
             </div>

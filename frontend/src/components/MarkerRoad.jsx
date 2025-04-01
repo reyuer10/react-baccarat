@@ -3,6 +3,7 @@ import { useCostumizeResults } from '../hooks/useCustomizeResults'
 
 function MarkerRoad({ m, resultBoardMarkerData }) {
 
+
     const {
         handleFormatStyleResults,
         handleShowResultsOnMarkerRoadBy,
@@ -15,7 +16,7 @@ function MarkerRoad({ m, resultBoardMarkerData }) {
                     key={key}
                     className='h-full'>
                     {m[key].map(col => {
-                        console.log(col)
+                        // console.log(col)
                         return (<div
                             key={col.colId}
                             className={`h-[calc(100%/6)] border border-orange-200 flex justify-center items-center `}
